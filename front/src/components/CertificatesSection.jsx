@@ -14,7 +14,8 @@ export default function CertificatesSection() {
     imageUrl: ''
   });
 
-  const API_URL = "http://localhost:5000/api/certificates";
+  const API_BASE_URL = import.meta.env.VITE_API_URL || "https://portfolio-backend-4t3v.onrender.com";
+  const API_URL = `${API_BASE_URL}/api/certificates`;
 
   // Fetch certificates from MongoDB
   const fetchCertificates = () => {

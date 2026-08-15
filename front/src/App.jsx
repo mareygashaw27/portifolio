@@ -24,7 +24,8 @@ function App() {
     imageUrl: ''
   });
 
-  const API_URL = "http://localhost:5000/api/projects";
+  const API_BASE_URL = import.meta.env.VITE_API_URL || "https://portfolio-backend-4t3v.onrender.com";
+  const API_URL = `${API_BASE_URL}/api/projects`;
 
   // Fetch projects from MongoDB
   const fetchProjects = () => {

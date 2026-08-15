@@ -5,7 +5,8 @@ export default function CvSection() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
 
-  const API_URL = "http://localhost:5000/api/cv";
+  const API_BASE_URL = import.meta.env.VITE_API_URL || "https://portfolio-backend-4t3v.onrender.com";
+  const API_URL = `${API_BASE_URL}/api/cv`;
 
   // Fetch the latest CV on mount
   const fetchCv = () => {
