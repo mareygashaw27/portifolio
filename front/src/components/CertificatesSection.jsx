@@ -1,20 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 export default function CertificatesSection() {
+  const { API_BASE_URL } = useAuth();
   const [certificates, setCertificates] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [imagePreview, setImagePreview] = useState('');
-  const [formData, setFormData] = useState({
-    title: '',
-    issuer: '',
-    date: '',
-    description: '',
-    icon: '📜',
-    imageUrl: ''
-  });
+  const [selectedCert, setSelectedCert] = useState(null);
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || "https://portfolio-backend-4t3v.onrender.com";
   const API_URL = `${API_BASE_URL}/api/certificates`;
 
   // Fetch certificates from MongoDB
@@ -37,85 +29,21 @@ export default function CertificatesSection() {
     fetchCertificates();
   }, []);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert("የፋይሉ መጠን ከ 5MB በታች መሆን አለበት!");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-        setFormData((prev) => ({ ...prev, imageUrl: reader.result }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!formData.title || !formData.issuer) {
-      alert("እባክዎን Title እና Issuer ይሙሉ!");
-      return;
-    }
-
-    fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData)
-    })
-      .then((res) => res.json())
-      .then((newCert) => {
-        setCertificates([newCert, ...certificates]);
-        setShowModal(false);
-        setFormData({ title: '', issuer: '', date: '', description: '', icon: '📜', imageUrl: '' });
-        setImagePreview('');
-      })
-      .catch((err) => console.error("Error adding certificate:", err));
-  };
-
-  const handleDelete = (id) => {
-    if (!window.confirm("እርግጠኛ ነዎት ይህን certificate ማጥፋት ይፈልጋሉ?")) return;
-
-    fetch(`${API_URL}/${id}`, { method: "DELETE" })
-      .then((res) => res.json())
-      .then(() => {
-        setCertificates(certificates.filter((c) => c._id !== id));
-      })
-      .catch((err) => console.error("Error deleting certificate:", err));
-  };
-
-  const iconOptions = ['📜', '🏆', '🎨', '⚙️', '🎓', '💻', '🌟', '🔥'];
-
-  const inputStyle = {
-    width: "100%",
-    padding: "12px",
-    borderRadius: "8px",
-    border: "1px solid var(--border-color)",
-    background: "rgba(0, 0, 0, 0.4)",
-    color: "#fff",
-    fontSize: "14px",
-    outline: "none"
-  };
+  // Close modal on Escape key
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.key === 'Escape') setSelectedCert(null);
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, []);
 
   return (
     <section id="certificates" style={{ marginBottom: "80px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "30px", flexWrap: "wrap", gap: "12px" }}>
-        <h2 style={{ fontSize: "28px", fontWeight: "700", textAlign: "center" }}>
-          📜 <span className="gradient-text">Certificates & Achievements</span>
+        <h2 style={{ fontSize: "28px", fontWeight: "700" }}>
+          <span className="gradient-text">Certificates & Achievements</span>
         </h2>
-        <button
-          className="btn-primary"
-          onClick={() => setShowModal(true)}
-          style={{ fontSize: "14px", padding: "10px 20px" }}
-        >
-          ➕ Certificate ጨምር
-        </button>
       </div>
 
       {/* Loading State */}
@@ -131,17 +59,9 @@ export default function CertificatesSection() {
           padding: "48px 24px",
           textAlign: "center"
         }}>
-          <span style={{ fontSize: "48px", display: "block", marginBottom: "16px" }}>📜</span>
-          <p style={{ color: "var(--text-sub)", fontSize: "16px", marginBottom: "16px" }}>
-            ገና certificate አልተጨመረም
+          <p style={{ color: "var(--text-sub)", fontSize: "16px" }}>
+            No certificates published yet
           </p>
-          <button
-            className="btn-primary"
-            onClick={() => setShowModal(true)}
-            style={{ fontSize: "14px" }}
-          >
-            ➕ የመጀመሪያውን Certificate ጨምር
-          </button>
         </div>
       )}
 
@@ -156,10 +76,23 @@ export default function CertificatesSection() {
             <div
               key={cert._id}
               className="glass-card cert-card"
+              onClick={() => cert.imageUrl && setSelectedCert(cert)}
               style={{
                 padding: "clamp(16px, 4vw, 28px)",
                 position: "relative",
-                overflow: "hidden"
+                overflow: "hidden",
+                cursor: cert.imageUrl ? "pointer" : "default",
+                transition: "transform 0.2s ease, box-shadow 0.2s ease"
+              }}
+              onMouseEnter={(e) => {
+                if (cert.imageUrl) {
+                  e.currentTarget.style.transform = "translateY(-4px)";
+                  e.currentTarget.style.boxShadow = "0 12px 40px rgba(168, 85, 247, 0.25)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "";
               }}
             >
               {/* Accent corner glow */}
@@ -174,30 +107,6 @@ export default function CertificatesSection() {
                 pointerEvents: "none"
               }}></div>
 
-              {/* Delete button */}
-              <button
-                onClick={() => handleDelete(cert._id)}
-                style={{
-                  position: "absolute",
-                  top: "12px",
-                  right: "12px",
-                  background: "rgba(239, 68, 68, 0.15)",
-                  border: "1px solid rgba(239, 68, 68, 0.3)",
-                  color: "#ef4444",
-                  borderRadius: "8px",
-                  width: "32px",
-                  height: "32px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  zIndex: 5,
-                  transition: "all 0.2s ease"
-                }}
-                title="Delete certificate"
-              >🗑️</button>
-
               <div style={{ position: "relative", zIndex: 1 }}>
                 {/* Certificate image */}
                 {cert.imageUrl && (
@@ -205,7 +114,8 @@ export default function CertificatesSection() {
                     marginBottom: "16px",
                     borderRadius: "10px",
                     overflow: "hidden",
-                    border: "1px solid var(--border-color)"
+                    border: "1px solid var(--border-color)",
+                    position: "relative"
                   }}>
                     <img
                       src={cert.imageUrl}
@@ -213,92 +123,45 @@ export default function CertificatesSection() {
                       style={{
                         width: "100%",
                         height: "160px",
-                        objectFit: "cover"
+                        objectFit: "cover",
+                        display: "block"
                       }}
                     />
+
                   </div>
                 )}
 
-                {/* Icon and title row */}
-                <div style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  marginBottom: "12px"
-                }}>
-                  <span style={{
-                    fontSize: "32px",
-                    width: "50px",
-                    height: "50px",
+                {/* Title and details */}
+                <div style={{ marginBottom: "12px" }}>
+                  <h3 style={{
+                    fontSize: "17px",
+                    fontWeight: "700",
+                    lineHeight: "1.3",
+                    color: "var(--text-main)"
+                  }}>
+                    {cert.title}
+                  </h3>
+                  <div style={{
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "center",
-                    borderRadius: "12px",
-                    background: "rgba(97, 218, 255, 0.08)",
-                    border: "1px solid var(--border-accent)",
-                    flexShrink: 0
+                    gap: "8px",
+                    marginTop: "6px"
                   }}>
-                    {cert.icon}
-                  </span>
-                  <div>
-                    <h3 style={{
-                      fontSize: "17px",
-                      fontWeight: "700",
-                      lineHeight: "1.3",
-                      color: "var(--text-main)"
+                    <span style={{
+                      fontSize: "13px",
+                      color: "var(--primary)",
+                      fontWeight: "600"
                     }}>
-                      {cert.title}
-                    </h3>
-                    <div style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      marginTop: "4px"
-                    }}>
-                      <span style={{
-                        fontSize: "13px",
-                        color: "var(--primary)",
-                        fontWeight: "600"
-                      }}>
-                        {cert.issuer}
-                      </span>
-                      {cert.date && (
-                        <>
-                          <span style={{
-                            width: "4px",
-                            height: "4px",
-                            borderRadius: "50%",
-                            background: "var(--text-sub)",
-                            display: "inline-block"
-                          }}></span>
-                          <span style={{
-                            fontSize: "13px",
-                            color: "var(--text-sub)"
-                          }}>
-                            {cert.date}
-                          </span>
-                        </>
-                      )}
-                    </div>
+                      {cert.issuer}
+                    </span>
                   </div>
                 </div>
-
-                {cert.description && (
-                  <p style={{
-                    fontSize: "14px",
-                    color: "var(--text-sub)",
-                    lineHeight: "1.7"
-                  }}>
-                    {cert.description}
-                  </p>
-                )}
 
                 {/* Verified badge */}
                 <div style={{
                   marginTop: "16px",
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: "6px",
                   padding: "4px 12px",
                   borderRadius: "20px",
                   background: "rgba(16, 185, 129, 0.1)",
@@ -307,7 +170,7 @@ export default function CertificatesSection() {
                   fontWeight: "600",
                   color: "#10b981"
                 }}>
-                  ✓ Verified
+                  Verified Certificate
                 </div>
               </div>
             </div>
@@ -315,178 +178,128 @@ export default function CertificatesSection() {
         </div>
       )}
 
-      {/* Add Certificate Modal */}
-      {showModal && (
-        <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: "rgba(0, 0, 0, 0.75)",
-          backdropFilter: "blur(8px)",
-          zIndex: 1000,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "20px"
-        }}>
-          <div className="glass-card animate-fade-in" style={{
-            width: "100%",
-            maxWidth: "540px",
-            padding: "30px",
-            background: "#161821",
-            maxHeight: "90vh",
-            overflowY: "auto"
-          }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-              <h3 style={{ fontSize: "22px", fontWeight: "700" }}>📜 አዲስ Certificate ጨምር</h3>
-              <button
-                onClick={() => { setShowModal(false); setImagePreview(''); }}
-                style={{ background: "none", border: "none", color: "var(--text-sub)", fontSize: "20px", cursor: "pointer" }}
-              >✖</button>
+      {/* ===== LIGHTBOX MODAL ===== */}
+      {selectedCert && (
+        <div
+          onClick={() => setSelectedCert(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            background: "rgba(0, 0, 0, 0.88)",
+            backdropFilter: "blur(10px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+            animation: "certFadeIn 0.2s ease"
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: "relative",
+              maxWidth: "900px",
+              width: "100%",
+              background: "rgba(15, 20, 40, 0.97)",
+              borderRadius: "20px",
+              border: "1px solid rgba(168, 85, 247, 0.3)",
+              boxShadow: "0 30px 80px rgba(0,0,0,0.6)",
+              overflow: "hidden",
+              animation: "certSlideUp 0.25s ease"
+            }}
+          >
+            {/* Close button */}
+            <button
+              onClick={() => setSelectedCert(null)}
+              style={{
+                position: "absolute",
+                top: "14px",
+                right: "14px",
+                zIndex: 10,
+                background: "rgba(0,0,0,0.5)",
+                border: "1px solid rgba(255,255,255,0.2)",
+                borderRadius: "50%",
+                width: "36px",
+                height: "36px",
+                cursor: "pointer",
+                color: "#fff",
+                fontSize: "18px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                lineHeight: 1,
+                transition: "background 0.2s"
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.15)"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "rgba(0,0,0,0.5)"}
+            >
+              ✕
+            </button>
+
+            {/* Certificate Image - Full size */}
+            <div style={{ background: "#fff", lineHeight: 0 }}>
+              <img
+                src={selectedCert.imageUrl}
+                alt={selectedCert.title}
+                style={{
+                  width: "100%",
+                  maxHeight: "70vh",
+                  objectFit: "contain",
+                  display: "block"
+                }}
+              />
             </div>
 
-            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            {/* Info bar */}
+            <div style={{
+              padding: "20px 24px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: "12px"
+            }}>
               <div>
-                <label style={{ display: "block", marginBottom: "6px", fontSize: "14px", fontWeight: "500" }}>
-                  Certificate Title *
-                </label>
-                <input
-                  type="text"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleChange}
-                  placeholder="ለአብነት: Full-Stack Web Development"
-                  required
-                  style={inputStyle}
-                />
+                <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#fff", margin: "0 0 4px" }}>
+                  {selectedCert.title}
+                </h3>
+                <span style={{ fontSize: "14px", color: "var(--primary)", fontWeight: "600" }}>
+                  {selectedCert.issuer}
+                </span>
               </div>
-
-              <div>
-                <label style={{ display: "block", marginBottom: "6px", fontSize: "14px", fontWeight: "500" }}>
-                  Issuer (ያወጣው ተቋም) *
-                </label>
-                <input
-                  type="text"
-                  name="issuer"
-                  value={formData.issuer}
-                  onChange={handleChange}
-                  placeholder="ለአብነት: Udemy, Coursera, freeCodeCamp"
-                  required
-                  style={inputStyle}
-                />
+              <div style={{
+                display: "inline-flex",
+                alignItems: "center",
+                padding: "6px 14px",
+                borderRadius: "20px",
+                background: "rgba(16, 185, 129, 0.12)",
+                border: "1px solid rgba(16, 185, 129, 0.35)",
+                fontSize: "13px",
+                fontWeight: "600",
+                color: "#10b981"
+              }}>
+                ✓ Verified Certificate
               </div>
-
-              <div>
-                <label style={{ display: "block", marginBottom: "6px", fontSize: "14px", fontWeight: "500" }}>
-                  📅 Date (ዓመት)
-                </label>
-                <input
-                  type="text"
-                  name="date"
-                  value={formData.date}
-                  onChange={handleChange}
-                  placeholder="2025"
-                  style={inputStyle}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: "block", marginBottom: "6px", fontSize: "14px", fontWeight: "500" }}>
-                  መግለጫ (Description)
-                </label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  placeholder="ስለ certificate ያጭር መግለጫ..."
-                  rows="3"
-                  style={inputStyle}
-                />
-              </div>
-
-              {/* Icon Picker */}
-              <div>
-                <label style={{ display: "block", marginBottom: "6px", fontSize: "14px", fontWeight: "500" }}>
-                  🎯 Icon ምረጥ
-                </label>
-                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                  {iconOptions.map((icon) => (
-                    <button
-                      key={icon}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, icon })}
-                      style={{
-                        width: "42px",
-                        height: "42px",
-                        borderRadius: "10px",
-                        border: formData.icon === icon
-                          ? "2px solid var(--primary)"
-                          : "1px solid var(--border-color)",
-                        background: formData.icon === icon
-                          ? "rgba(97, 218, 255, 0.15)"
-                          : "rgba(0, 0, 0, 0.3)",
-                        fontSize: "20px",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        transition: "all 0.2s ease"
-                      }}
-                    >
-                      {icon}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Certificate Image Upload */}
-              <div>
-                <label style={{ display: "block", marginBottom: "6px", fontSize: "14px", fontWeight: "500" }}>
-                  📷 Certificate ፎቶ (Image Upload)
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  style={{
-                    width: "100%",
-                    padding: "8px",
-                    borderRadius: "8px",
-                    border: "1px solid var(--border-color)",
-                    background: "rgba(0, 0, 0, 0.4)",
-                    color: "#ccc"
-                  }}
-                />
-                {imagePreview && (
-                  <div style={{ marginTop: "10px", textAlign: "center" }}>
-                    <img
-                      src={imagePreview}
-                      alt="Preview"
-                      style={{ maxWidth: "100%", maxHeight: "150px", borderRadius: "8px", border: "1px solid var(--border-accent)" }}
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div style={{ display: "flex", gap: "12px", marginTop: "10px" }}>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => { setShowModal(false); setImagePreview(''); }}
-                  style={{ flex: 1, justifyContent: "center" }}
-                >
-                  ሰርዝ (Cancel)
-                </button>
-                <button type="submit" className="btn-primary" style={{ flex: 1, justifyContent: "center" }}>
-                  💾 ወደ MongoDB መዝግብ
-                </button>
-              </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
+
+      <style>{`
+        @keyframes certFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes certSlideUp {
+          from { opacity: 0; transform: translateY(30px) scale(0.97); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .cert-card:hover .cert-img-overlay {
+          background: rgba(0,0,0,0.45) !important;
+          opacity: 1 !important;
+        }
+      `}</style>
     </section>
   );
 }

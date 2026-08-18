@@ -6,28 +6,32 @@ import ProjectsSection from './components/ProjectsSection';
 import SkillsSection from './components/SkillsSection';
 import CertificatesSection from './components/CertificatesSection';
 import CvSection from './components/CvSection';
-import AddProjectModal from './components/AddProjectModal';
+import VideoSection from './components/VideoSection';
+import AdminDashboard from './components/AdminDashboard';
+import AdminLoginPage from './components/AdminLoginPage';
+import { useAuth } from './context/AuthContext';
 
 function App() {
+  const { isAdmin, API_BASE_URL } = useAuth();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [imagePreview, setImagePreview] = useState('');
   const [activeSection, setActiveSection] = useState('home');
-  
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    technologies: 'React, Node.js, MongoDB',
-    projectUrl: '',
-    githubUrl: '',
-    imageUrl: ''
+  const [viewMode, setViewMode] = useState(() => {
+    return window.location.hash === '#admin' ? 'admin' : 'portfolio';
+  });
+  const [profile, setProfile] = useState({
+    name: 'Marey Gashaw',
+    title: 'Full-Stack Web Developer',
+    subtitle: 'Information Technology Student',
+    description: 'Passionate about building modern web applications and exploring new technologies. Turning ideas into digital experiences.',
+    email: 'mareygashaw21@gmail.com',
+    phone: '0943454397',
+    photoUrl: ''
   });
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || "https://portfolio-backend-4t3v.onrender.com";
   const API_URL = `${API_BASE_URL}/api/projects`;
 
-  // Fetch projects from MongoDB
+  // Fetch projects for live portfolio
   const fetchProjects = () => {
     setLoading(true);
     fetch(API_URL)
@@ -43,91 +47,77 @@ function App() {
       });
   };
 
+  const fetchProfile = () => {
+    fetch(`${API_BASE_URL}/api/profile`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => { if (data) setProfile(data); })
+      .catch((err) => console.error('Error fetching profile:', err));
+  };
+
   useEffect(() => {
     fetchProjects();
+    fetchProfile();
+
+    const handleHashChange = () => {
+      if (window.location.hash === '#admin') {
+        setViewMode('admin');
+      }
+    };
+    // Listen for profile updates from admin dashboard
+    const handleProfileUpdated = () => fetchProfile();
+    window.addEventListener('hashchange', handleHashChange);
+    window.addEventListener('profileUpdated', handleProfileUpdated);
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('profileUpdated', handleProfileUpdated);
+    };
   }, []);
 
-  // Handle Text inputs
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  // When admin is clicked from navbar
+  const handleOpenAdmin = () => {
+    window.location.hash = 'admin';
+    setViewMode('admin');
   };
 
-  // Handle File Upload (Image to Base64)
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert("የምስሉ መጠን ከ 5MB በታች መሆን አለበት!");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-        setFormData((prev) => ({ ...prev, imageUrl: reader.result }));
-      };
-      reader.readAsDataURL(file);
+  const handleExitAdmin = () => {
+    window.location.hash = activeSection || 'home';
+    setViewMode('portfolio');
+    fetchProjects();
+  };
+
+  // If in Admin View Mode (Dedicated Full Page)
+  if (viewMode === 'admin') {
+    if (isAdmin) {
+      return <AdminDashboard onExitDashboard={handleExitAdmin} />;
     }
-  };
+    return (
+      <AdminLoginPage
+        onBack={handleExitAdmin}
+        onLoginSuccess={() => setViewMode('admin')}
+      />
+    );
+  }
 
-  // Submit Project to MongoDB
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!formData.title || !formData.description) {
-      alert("እባክዎን የፕሮጀክት ርዕስ (Title) እና መግለጫ (Description) ይሙሉ!");
-      return;
-    }
-
-    fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData)
-    })
-      .then((res) => res.json())
-      .then((newProject) => {
-        setProjects([newProject, ...projects]);
-        setShowModal(false);
-        setFormData({
-          title: '',
-          description: '',
-          technologies: 'React, Node.js, MongoDB',
-          projectUrl: '',
-          githubUrl: '',
-          imageUrl: ''
-        });
-        setImagePreview('');
-      })
-      .catch((err) => console.error("Error adding project:", err));
-  };
-
-  // Delete project from MongoDB
-  const handleDelete = (id) => {
-    if (!window.confirm("እርግጠኛ ነዎት ይህን ፕሮጀክት ማጥፋት ይፈልጋሉ?")) return;
-
-    fetch(`${API_URL}/${id}`, { method: "DELETE" })
-      .then((res) => res.json())
-      .then(() => {
-        setProjects(projects.filter((p) => p._id !== id));
-      })
-      .catch((err) => console.error("Error deleting project:", err));
-  };
-
+  // Public Portfolio View
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <Navbar 
-        onOpenModal={() => setShowModal(true)} 
+        onOpenLogin={handleOpenAdmin}
+        onOpenAdminPanel={handleOpenAdmin}
         activeSection={activeSection} 
-        setActiveSection={setActiveSection} 
+        setActiveSection={setActiveSection}
+        profile={profile}
       />
 
       <main style={{ flex: 1, maxWidth: "1200px", margin: "0 auto", padding: "40px 20px", width: "100%" }}>
         {activeSection === 'home' && (
           <div className="section-fade-in">
-            <Hero onOpenModal={() => setShowModal(true)} />
+            <Hero profile={profile} />
           </div>
         )}
         {activeSection === 'about' && (
           <div className="section-fade-in">
-            <AboutSection />
+            <AboutSection profile={profile} />
           </div>
         )}
         {activeSection === 'projects' && (
@@ -136,8 +126,6 @@ function App() {
               projects={projects}
               loading={loading}
               fetchProjects={fetchProjects}
-              handleDelete={handleDelete}
-              onOpenModal={() => setShowModal(true)}
             />
           </div>
         )}
@@ -156,20 +144,15 @@ function App() {
             <CvSection />
           </div>
         )}
+        {activeSection === 'videos' && (
+          <div className="section-fade-in">
+            <VideoSection />
+          </div>
+        )}
       </main>
 
-      <AddProjectModal
-        showModal={showModal}
-        onClose={() => setShowModal(false)}
-        handleSubmit={handleSubmit}
-        formData={formData}
-        handleChange={handleChange}
-        handleImageUpload={handleImageUpload}
-        imagePreview={imagePreview}
-      />
-
       <footer style={{ borderTop: "1px solid var(--border-color)", padding: "30px 20px", textAlign: "center", color: "var(--text-sub)", fontSize: "14px" }}>
-        © {new Date().getFullYear()} Marey Gashaw — Created with React & Node.js & MongoDB
+        © {new Date().getFullYear()} Marey Gashaw — Full-Stack Portfolio
       </footer>
     </div>
   );

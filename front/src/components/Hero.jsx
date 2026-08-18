@@ -1,6 +1,10 @@
 import React from 'react';
 
-export default function Hero({ onOpenModal }) {
+export default function Hero({ onOpenModal, profile = {} }) {
+  const name = profile.name || 'Marey Gashaw';
+  const subtitle = profile.subtitle || 'Information Technology Student';
+  const description = profile.description || 'Passionate about building modern web applications and exploring new technologies. Turning ideas into digital experiences.';
+  const photoUrl = profile.photoUrl || '/mar.jpg';
   return (
     <section style={{
       display: "flex",
@@ -56,7 +60,7 @@ export default function Hero({ onOpenModal }) {
               fontSize: "inherit",
               fontWeight: "inherit"
             }}>
-              Marey
+              {name.split(' ')[0]}
             </span>
           </h1>
 
@@ -68,7 +72,7 @@ export default function Hero({ onOpenModal }) {
             marginBottom: "24px",
             lineHeight: "1.5"
           }}>
-            Information Technology Student
+            {subtitle}
           </p>
 
           {/* Description */}
@@ -79,8 +83,7 @@ export default function Hero({ onOpenModal }) {
             marginBottom: "32px",
             maxWidth: "520px"
           }}>
-            Passionate about building modern web applications and exploring
-            new technologies. Turning ideas into digital experiences.
+            {description}
           </p>
 
         </div>
@@ -96,7 +99,7 @@ export default function Hero({ onOpenModal }) {
           <div className="profile-ring">
             <div className="profile-inner-img">
               <img
-                src="/mar.jpg"
+                src={photoUrl}
                 alt="Developer Profile"
                 style={{
                   width: "100%",
@@ -104,10 +107,8 @@ export default function Hero({ onOpenModal }) {
                   objectFit: "cover"
                 }}
                 onError={(e) => {
-                  if (e.target.src.endsWith('/mar.jpg')) {
+                  if (!e.target.src.endsWith('/mar.png')) {
                     e.target.src = "/mar.png";
-                  } else if (e.target.src.endsWith('/mar.png')) {
-                    e.target.src = "/mar.svg";
                   }
                 }}
               />

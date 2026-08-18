@@ -35,24 +35,24 @@ export default function AddProjectModal({
         overflowY: "auto"
       }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-          <h3 style={{ fontSize: "22px", fontWeight: "700" }}>➕ አዲስ ፕሮጀክት ወደ MongoDB ጨምር</h3>
+          <h3 style={{ fontSize: "22px", fontWeight: "700" }}>Add New Project</h3>
           <button
             onClick={onClose}
             style={{ background: "none", border: "none", color: "var(--text-sub)", fontSize: "20px", cursor: "pointer" }}
-          >✖</button>
+          >X</button>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           <div>
             <label style={{ display: "block", marginBottom: "6px", fontSize: "14px", fontWeight: "500" }}>
-              የፕሮጀክት ርዕስ (Title) *
+              Project Title *
             </label>
             <input
               type="text"
               name="title"
               value={formData.title}
               onChange={handleChange}
-              placeholder="ለአብነት: E-Commerce Web App"
+              placeholder="e.g. E-Commerce Web App"
               required
               style={{
                 width: "100%",
@@ -67,13 +67,13 @@ export default function AddProjectModal({
 
           <div>
             <label style={{ display: "block", marginBottom: "6px", fontSize: "14px", fontWeight: "500" }}>
-              መግለጫ (Description) *
+              Description *
             </label>
             <textarea
               name="description"
               value={formData.description}
               onChange={handleChange}
-              placeholder="ስለ ፕሮጀክቱ አጭር መግለጫ ይጻፉ..."
+              placeholder="Write a brief description of the project..."
               rows="3"
               required
               style={{
@@ -90,7 +90,7 @@ export default function AddProjectModal({
           {/* Image File Upload */}
           <div>
             <label style={{ display: "block", marginBottom: "6px", fontSize: "14px", fontWeight: "500" }}>
-              📷 የፕሮጀክት ፎቶ (Image File Upload)
+              Project Image (Upload)
             </label>
             <input
               type="file"
@@ -118,7 +118,7 @@ export default function AddProjectModal({
 
           <div>
             <label style={{ display: "block", marginBottom: "6px", fontSize: "14px", fontWeight: "500" }}>
-              🛠️ ቴክኖሎጂዎች (Technologies)
+              Technologies (comma separated)
             </label>
             <input
               type="text"
@@ -139,7 +139,7 @@ export default function AddProjectModal({
 
           <div>
             <label style={{ display: "block", marginBottom: "6px", fontSize: "14px", fontWeight: "500" }}>
-              🌐 Live Demo Link (Project URL)
+              Live Demo Link (Project URL)
             </label>
             <input
               type="url"
@@ -160,7 +160,7 @@ export default function AddProjectModal({
 
           <div>
             <label style={{ display: "block", marginBottom: "6px", fontSize: "14px", fontWeight: "500" }}>
-              🐙 GitHub Link
+              GitHub Link
             </label>
             <input
               type="url"
@@ -181,10 +181,10 @@ export default function AddProjectModal({
 
           <div style={{ display: "flex", gap: "12px", marginTop: "10px" }}>
             <button type="button" className="btn-secondary" onClick={onClose} style={{ flex: 1, justifyContent: "center" }}>
-              ሰርዝ (Cancel)
+              Cancel
             </button>
             <button type="submit" className="btn-primary" style={{ flex: 1, justifyContent: "center" }}>
-              💾 ወደ MongoDB መዝግብ
+              Save Project
             </button>
           </div>
         </form>

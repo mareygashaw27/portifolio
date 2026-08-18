@@ -1,8 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const Certificate = require("../models/Certificate");
+const { authMiddleware } = require("../middleware/authMiddleware");
 
-// GET: Fetch all certificates
+// GET: Fetch all certificates (Public)
 router.get("/", async (req, res) => {
   try {
     const certificates = await Certificate.find().sort({ createdAt: -1 });
@@ -12,8 +13,8 @@ router.get("/", async (req, res) => {
   }
 });
 
-// POST: Add a new certificate
-router.post("/", async (req, res) => {
+// POST: Add a new certificate (Admin Only)
+router.post("/", authMiddleware, async (req, res) => {
   try {
     const newCertificate = new Certificate(req.body);
     const saved = await newCertificate.save();
@@ -23,8 +24,21 @@ router.post("/", async (req, res) => {
   }
 });
 
-// DELETE: Delete a certificate by ID
-router.delete("/:id", async (req, res) => {
+// PUT: Update a certificate by ID (Admin Only)
+router.put("/:id", authMiddleware, async (req, res) => {
+  try {
+    const updated = await Certificate.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!updated) {
+      return res.status(404).json({ message: "Certificate not found" });
+    }
+    res.json(updated);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// DELETE: Delete a certificate by ID (Admin Only)
+router.delete("/:id", authMiddleware, async (req, res) => {
   try {
     const deleted = await Certificate.findByIdAndDelete(req.params.id);
     if (!deleted) {

@@ -1,15 +1,20 @@
 import React from 'react';
 
-export default function AboutSection() {
+export default function AboutSection({ profile = {} }) {
+  const name = profile.name || 'Marey Gashaw';
+  const description1 = 'I am an Information Technology student and passionate Full-Stack Web Developer who enjoys creating modern, responsive, and user-friendly web applications. I have experience working with HTML, CSS, JavaScript, React.js, Node.js, Express.js, Laravel, PHP, MySQL, and Java.';
+  const description2 = 'I enjoy solving real-world problems through technology, learning new tools, and turning ideas into functional applications. My goal is to continuously improve my skills and build innovative software solutions that make a meaningful impact.';
+  const email = profile.email || 'mareygashaw21@gmail.com';
+  const phone = profile.phone || '0943454397';
   const techStack = [
     "HTML", "CSS", "JavaScript", "React.js", "Node.js",
-    "Express.js", "Laravel", "PHP", "MySQL"
+    "Express.js", "Laravel", "PHP", "MySQL", "Java", "Video Editing"
   ];
 
   return (
     <section id="about" style={{ marginBottom: "80px" }}>
       <h2 style={{ fontSize: "28px", fontWeight: "700", marginBottom: "30px", textAlign: "center" }}>
-        🙋‍♂️ <span className="gradient-text">About Me</span>
+        <span className="gradient-text">About Me</span>
       </h2>
 
       <div className="glass-card about-card" style={{
@@ -71,28 +76,43 @@ export default function AboutSection() {
             marginBottom: "16px",
             lineHeight: "1.3"
           }}>
-            Hi, I'm <span className="gradient-text">Marey Gashaw</span>.
+            Hi, I'm <span className="gradient-text">{name}</span>.
           </h3>
+
 
           <p style={{
             color: "var(--text-sub)",
-            fontSize: "17px",
+            fontSize: "16px",
+            lineHeight: "1.8",
+            marginBottom: "12px",
+            maxWidth: "700px"
+          }}>
+            {description1}
+          </p>
+
+          <p style={{
+            color: "var(--text-sub)",
+            fontSize: "16px",
             lineHeight: "1.8",
             marginBottom: "16px",
             maxWidth: "700px"
           }}>
-            I am an Information Technology student and passionate Full-Stack Web Developer who enjoys creating modern, responsive, and user-friendly web applications. I have experience working with HTML, CSS, JavaScript, React.js, Node.js, Express.js, Laravel, PHP, and MySQL.
+            {description2}
           </p>
 
-          <p style={{
-            color: "var(--text-sub)",
-            fontSize: "17px",
-            lineHeight: "1.8",
-            marginBottom: "28px",
-            maxWidth: "700px"
-          }}>
-            I enjoy solving real-world problems through technology, learning new tools, and turning ideas into functional applications. My goal is to continuously improve my skills and build innovative software solutions that make a meaningful impact.
-          </p>
+          {/* Contact info */}
+          <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginBottom: '24px' }}>
+            {email && (
+              <a href={`mailto:${email}`} style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--primary)', textDecoration: 'none', fontSize: '14px', fontWeight: '600' }}>
+                📧 {email}
+              </a>
+            )}
+            {phone && (
+              <a href={`tel:${phone}`} style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#a855f7', textDecoration: 'none', fontSize: '14px', fontWeight: '600' }}>
+                📞 {phone}
+              </a>
+            )}
+          </div>
 
           {/* Tech stack tags */}
           <div style={{ marginBottom: "8px" }}>

@@ -1,30 +1,17 @@
 import React from 'react';
 
-export default function ProjectsSection({ projects, loading, fetchProjects, handleDelete, onOpenModal }) {
+export default function ProjectsSection({ projects, loading, fetchProjects }) {
   return (
     <section id="projects" style={{ marginBottom: "80px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px", flexWrap: "wrap", gap: "16px" }}>
-        <div>
-          <h2 style={{ fontSize: "32px", fontWeight: "700" }}>የሰሯቸው ፕሮጀክቶች (Projects)</h2>
-          <p style={{ color: "var(--text-sub)" }}>ከ MongoDB በዳይናሚክ የተገኙ ({projects.length}) ፕሮጀክቶች</p>
-        </div>
-        <button className="btn-secondary" onClick={fetchProjects}>
-          🔄 Refresh
-        </button>
-      </div>
 
       {loading ? (
         <div style={{ textAlign: "center", padding: "60px 0", color: "var(--text-sub)" }}>
-          <p>ፕሮጀክቶች ከ MongoDB እየመጡ ነው... ⏳</p>
+          <p>Loading projects...</p>
         </div>
       ) : projects.length === 0 ? (
         <div className="glass-card" style={{ padding: "60px 20px", textAlign: "center" }}>
-          <div style={{ fontSize: "48px", marginBottom: "10px" }}>📦</div>
-          <h3 style={{ marginBottom: "10px" }}>እስካሁን ምንም ፕሮጀክት አልተጨመረም</h3>
-          <p style={{ color: "var(--text-sub)", marginBottom: "20px" }}>ከላይ የሚገኘውን <strong>"+ አዲስ ፕሮጀክት ጨምር"</strong> የሚለውን በመጫን አዲስ ፕሮጀክት ማስገባት ይችላሉ።</p>
-          <button className="btn-primary" onClick={onOpenModal}>
-            ➕ አሁን አዲስ ፕሮጀክት ጨምር
-          </button>
+          <h3 style={{ marginBottom: "10px" }}>No projects added yet</h3>
+          <p style={{ color: "var(--text-sub)" }}>New projects will be published here soon!</p>
         </div>
       ) : (
         <div style={{
@@ -46,32 +33,6 @@ export default function ProjectsSection({ projects, loading, fetchProjects, hand
                 position: "relative",
                 borderBottom: "1px solid var(--border-color)"
               }}>
-                {!item.imageUrl && (
-                  <span style={{ fontSize: "40px", opacity: 0.4 }}>💻</span>
-                )}
-
-                <button
-                  onClick={() => handleDelete(item._id)}
-                  title="ፕሮጀክቱን አጥፋ"
-                  style={{
-                    position: "absolute",
-                    top: "12px",
-                    right: "12px",
-                    background: "rgba(239, 68, 68, 0.85)",
-                    color: "#fff",
-                    border: "none",
-                    width: "32px",
-                    height: "32px",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backdropFilter: "blur(4px)"
-                  }}
-                >
-                  🗑️
-                </button>
               </div>
 
               {/* Card Content */}
@@ -104,12 +65,12 @@ export default function ProjectsSection({ projects, loading, fetchProjects, hand
                 <div style={{ display: "flex", gap: "10px", paddingTop: "12px", borderTop: "1px solid var(--border-color)" }}>
                   {item.projectUrl && (
                     <a href={item.projectUrl} target="_blank" rel="noreferrer" className="btn-primary" style={{ padding: "8px 14px", fontSize: "13px", textDecoration: "none", flex: 1, justifyContent: "center" }}>
-                      🌐 Live Demo
+                      Live Demo
                     </a>
                   )}
                   {item.githubUrl && (
                     <a href={item.githubUrl} target="_blank" rel="noreferrer" className="btn-secondary" style={{ padding: "8px 14px", fontSize: "13px", textDecoration: "none", flex: 1, justifyContent: "center" }}>
-                      🐙 GitHub
+                      GitHub
                     </a>
                   )}
                 </div>

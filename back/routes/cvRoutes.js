@@ -1,8 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const Cv = require("../models/Cv");
+const { authMiddleware } = require("../middleware/authMiddleware");
 
-// GET: Fetch the current CV
+// GET: Fetch the current CV (Public)
 router.get("/", async (req, res) => {
   try {
     const cv = await Cv.findOne().sort({ uploadedAt: -1 });
@@ -12,8 +13,8 @@ router.get("/", async (req, res) => {
   }
 });
 
-// POST: Upload/replace CV
-router.post("/", async (req, res) => {
+// POST: Upload/replace CV (Admin Only)
+router.post("/", authMiddleware, async (req, res) => {
   try {
     // Delete all previous CVs (keep only the latest)
     await Cv.deleteMany({});
@@ -25,8 +26,8 @@ router.post("/", async (req, res) => {
   }
 });
 
-// DELETE: Delete CV
-router.delete("/:id", async (req, res) => {
+// DELETE: Delete CV (Admin Only)
+router.delete("/:id", authMiddleware, async (req, res) => {
   try {
     const deleted = await Cv.findByIdAndDelete(req.params.id);
     if (!deleted) {

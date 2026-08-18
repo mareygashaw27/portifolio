@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 
-export default function Navbar({ onOpenModal, activeSection, setActiveSection }) {
+export default function Navbar({ onOpenModal, onOpenLogin, onOpenAdminPanel, activeSection, setActiveSection, profile = {} }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { isAdmin, logout } = useAuth();
+  const displayName = profile.name || 'Marey Gashaw';
+  const photoUrl = profile.photoUrl || '/mar.jpg';
 
   const navLinks = [
     { id: "home", label: "Home" },
@@ -9,7 +13,8 @@ export default function Navbar({ onOpenModal, activeSection, setActiveSection })
     { id: "projects", label: "Projects" },
     { id: "skills", label: "Skills" },
     { id: "certificates", label: "Certificates" },
-    { id: "cv", label: "CV" }
+    { id: "cv", label: "CV" },
+    { id: "videos", label: "🎬 Videos" }
   ];
 
   return (
@@ -31,7 +36,7 @@ export default function Navbar({ onOpenModal, activeSection, setActiveSection })
         style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer" }}
       >
         <img
-          src="/mar.jpg"
+          src={photoUrl}
           alt="Logo"
           style={{
             width: "40px",
@@ -42,15 +47,13 @@ export default function Navbar({ onOpenModal, activeSection, setActiveSection })
             boxShadow: "0 0 10px rgba(97, 218, 255, 0.3)"
           }}
           onError={(e) => {
-            if (e.target.src.endsWith('/mar.jpg')) {
+            if (!e.target.src.endsWith('/mar.png')) {
               e.target.src = "/mar.png";
-            } else if (e.target.src.endsWith('/mar.png')) {
-              e.target.src = "/mar.svg";
             }
           }}
         />
         <span style={{ fontSize: "20px", fontWeight: "700" }} className="gradient-text">
-          Marey Gashaw
+          {displayName}
         </span>
       </div>
 
@@ -83,13 +86,63 @@ export default function Navbar({ onOpenModal, activeSection, setActiveSection })
             {link.label}
           </a>
         ))}
-        <button
-          className="btn-primary"
-          onClick={onOpenModal}
-          style={{ marginLeft: "8px", fontSize: "14px", padding: "8px 18px" }}
-        >
-          ➕ ፕሮጀክት ጨምር
-        </button>
+
+        {/* Admin Controls */}
+        {isAdmin ? (
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "10px" }}>
+            <button
+              onClick={onOpenAdminPanel}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                padding: "8px 16px",
+                borderRadius: "8px",
+                background: "#ff6b35",
+                border: "none",
+                fontSize: "13px",
+                fontWeight: "700",
+                color: "#ffffff",
+                cursor: "pointer",
+                boxShadow: "0 2px 10px rgba(255, 107, 53, 0.4)",
+                transition: "transform 0.2s ease"
+              }}
+            >
+              Admin Dashboard
+            </button>
+            <button
+              onClick={logout}
+              title="Logout"
+              style={{
+                background: "rgba(239, 68, 68, 0.12)",
+                border: "1px solid rgba(239, 68, 68, 0.3)",
+                color: "#ef4444",
+                padding: "8px 12px",
+                borderRadius: "8px",
+                fontSize: "13px",
+                fontWeight: "600",
+                cursor: "pointer",
+                transition: "all 0.2s ease"
+              }}
+            >
+              Logout
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={onOpenLogin}
+            className="btn-secondary"
+            style={{
+              marginLeft: "8px",
+              fontSize: "13px",
+              padding: "7px 14px",
+              border: "1px solid rgba(97, 218, 255, 0.3)",
+              background: "rgba(97, 218, 255, 0.06)",
+              color: "var(--primary)"
+            }}
+          >
+            Admin Login
+          </button>
+        )}
       </div>
 
       {/* Mobile hamburger */}
@@ -107,7 +160,7 @@ export default function Navbar({ onOpenModal, activeSection, setActiveSection })
           fontSize: "20px"
         }}
       >
-        {mobileOpen ? "✕" : "☰"}
+        {mobileOpen ? "X" : "Menu"}
       </button>
 
       {/* Mobile menu overlay */}
@@ -117,7 +170,7 @@ export default function Navbar({ onOpenModal, activeSection, setActiveSection })
           top: "69px",
           left: 0,
           right: 0,
-          background: "rgba(11, 12, 16, 0.95)",
+          background: "rgba(11, 12, 16, 0.96)",
           backdropFilter: "blur(16px)",
           borderBottom: "1px solid var(--border-color)",
           padding: "20px",
@@ -150,18 +203,67 @@ export default function Navbar({ onOpenModal, activeSection, setActiveSection })
               {link.label}
             </a>
           ))}
-          <button
-            className="btn-primary"
-            onClick={() => {
-              setMobileOpen(false);
-              onOpenModal();
-            }}
-            style={{ marginTop: "8px", fontSize: "14px" }}
-          >
-            ➕ ፕሮጀክት ጨምር
-          </button>
+
+          {isAdmin ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px" }}>
+              <button
+                onClick={() => {
+                  setMobileOpen(false);
+                  onOpenAdminPanel();
+                }}
+                style={{
+                  padding: "12px",
+                  borderRadius: "8px",
+                  background: "#ff6b35",
+                  border: "none",
+                  fontSize: "14px",
+                  fontWeight: "700",
+                  color: "#ffffff",
+                  cursor: "pointer"
+                }}
+              >
+                Open Admin Dashboard
+              </button>
+              <button
+                onClick={() => {
+                  setMobileOpen(false);
+                  logout();
+                }}
+                style={{
+                  background: "rgba(239, 68, 68, 0.15)",
+                  border: "1px solid rgba(239, 68, 68, 0.3)",
+                  color: "#ef4444",
+                  padding: "12px",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  cursor: "pointer"
+                }}
+              >
+                Logout (Admin)
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => {
+                setMobileOpen(false);
+                onOpenLogin();
+              }}
+              className="btn-secondary"
+              style={{
+                marginTop: "8px",
+                fontSize: "14px",
+                justifyContent: "center",
+                border: "1px solid rgba(97, 218, 255, 0.3)",
+                color: "var(--primary)"
+              }}
+            >
+              Admin Login
+            </button>
+          )}
         </div>
       )}
     </nav>
   );
 }
+
