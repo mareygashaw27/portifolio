@@ -2,7 +2,11 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "https://portfolio-backend-4t3v.onrender.com";
+let rawApiUrl = import.meta.env.VITE_API_URL || "https://portfolio-backend-4t3v.onrender.com";
+if (typeof window !== "undefined" && window.location.protocol === "https:" && rawApiUrl.startsWith("http://")) {
+  rawApiUrl = rawApiUrl.replace("http://", "https://");
+}
+const API_BASE_URL = rawApiUrl;
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);

@@ -15,12 +15,19 @@ export default function CertificatesSection() {
     fetch(API_URL)
       .then((res) => res.json())
       .then((data) => {
-        setCertificates(Array.isArray(data) ? data : []);
+        if (Array.isArray(data) && data.length > 0) {
+          setCertificates(data);
+          try { localStorage.setItem('portfolio_local_certificates', JSON.stringify(data)); } catch (e) {}
+        } else {
+          const local = localStorage.getItem('portfolio_local_certificates');
+          setCertificates(local ? JSON.parse(local) : (Array.isArray(data) ? data : []));
+        }
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Error fetching certificates:", err);
-        setCertificates([]);
+        console.warn("Error fetching certificates, using local fallback:", err);
+        const local = localStorage.getItem('portfolio_local_certificates');
+        setCertificates(local ? JSON.parse(local) : []);
         setLoading(false);
       });
   };

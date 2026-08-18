@@ -37,12 +37,19 @@ function App() {
     fetch(API_URL)
       .then((res) => res.json())
       .then((data) => {
-        setProjects(Array.isArray(data) ? data : []);
+        if (Array.isArray(data) && data.length > 0) {
+          setProjects(data);
+          try { localStorage.setItem('portfolio_local_projects', JSON.stringify(data)); } catch (e) {}
+        } else {
+          const local = localStorage.getItem('portfolio_local_projects');
+          setProjects(local ? JSON.parse(local) : (Array.isArray(data) ? data : []));
+        }
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Error fetching projects:", err);
-        setProjects([]);
+        console.warn("Error fetching projects from backend, using local fallback:", err);
+        const local = localStorage.getItem('portfolio_local_projects');
+        setProjects(local ? JSON.parse(local) : []);
         setLoading(false);
       });
   };
@@ -50,8 +57,20 @@ function App() {
   const fetchProfile = () => {
     fetch(`${API_BASE_URL}/api/profile`)
       .then((res) => (res.ok ? res.json() : null))
-      .then((data) => { if (data) setProfile(data); })
-      .catch((err) => console.error('Error fetching profile:', err));
+      .then((data) => {
+        if (data) {
+          setProfile(data);
+          try { localStorage.setItem('portfolio_local_profile', JSON.stringify(data)); } catch (e) {}
+        } else {
+          const local = localStorage.getItem('portfolio_local_profile');
+          if (local) setProfile(JSON.parse(local));
+        }
+      })
+      .catch((err) => {
+        console.warn('Error fetching profile from backend, using local fallback:', err);
+        const local = localStorage.getItem('portfolio_local_profile');
+        if (local) setProfile(JSON.parse(local));
+      });
   };
 
   useEffect(() => {

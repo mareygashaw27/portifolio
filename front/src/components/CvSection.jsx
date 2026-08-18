@@ -17,17 +17,28 @@ export default function CvSection() {
         return res.json();
       })
       .then((data) => {
-        setCv(data || null);
+        if (data && data.fileUrl) {
+          setCv(data);
+          try { localStorage.setItem('portfolio_local_cv', JSON.stringify(data)); } catch (e) {}
+        } else {
+          const local = localStorage.getItem('portfolio_local_cv');
+          setCv(local ? JSON.parse(local) : null);
+        }
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Error fetching CV:", err);
+        console.warn("Error fetching CV from backend, using local fallback:", err);
+        const local = localStorage.getItem('portfolio_local_cv');
+        setCv(local ? JSON.parse(local) : null);
         setLoading(false);
       });
   };
 
   useEffect(() => {
     fetchCv();
+    const handleCvUpdated = () => fetchCv();
+    window.addEventListener('cvUpdated', handleCvUpdated);
+    return () => window.removeEventListener('cvUpdated', handleCvUpdated);
   }, []);
 
   // Close fullscreen on Escape key

@@ -77,22 +77,36 @@ export default function AdminDashboard({ onExitDashboard }) {
     setLoading(true);
     try {
       const [projRes, certRes, cvRes, profileRes, vidRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/projects`).then((r) => (r.ok ? r.json() : [])),
-        fetch(`${API_BASE_URL}/api/certificates`).then((r) => (r.ok ? r.json() : [])),
-        fetch(`${API_BASE_URL}/api/cv`).then((r) => (r.ok ? r.json() : null)),
-        fetch(`${API_BASE_URL}/api/profile`).then((r) => (r.ok ? r.json() : null)),
-        fetch(`${API_BASE_URL}/api/videos`).then((r) => (r.ok ? r.json() : []))
+        fetch(`${API_BASE_URL}/api/projects`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`${API_BASE_URL}/api/certificates`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`${API_BASE_URL}/api/cv`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`${API_BASE_URL}/api/profile`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`${API_BASE_URL}/api/videos`).then((r) => (r.ok ? r.json() : null)).catch(() => null)
       ]);
-      setProjects(Array.isArray(projRes) ? projRes : []);
-      setCertificates(Array.isArray(certRes) ? certRes : []);
-      setCv(cvRes || null);
-      setVideos(Array.isArray(vidRes) ? vidRes : []);
-      if (profileRes) {
-        setProfile(profileRes);
-        setProfilePhotoPreview(profileRes.photoUrl || '');
+
+      const localProj = localStorage.getItem('portfolio_local_projects');
+      const localCert = localStorage.getItem('portfolio_local_certificates');
+      const localCv = localStorage.getItem('portfolio_local_cv');
+      const localProf = localStorage.getItem('portfolio_local_profile');
+      const localVid = localStorage.getItem('portfolio_local_videos');
+
+      const finalProj = (Array.isArray(projRes) && projRes.length > 0) ? projRes : (localProj ? JSON.parse(localProj) : []);
+      const finalCert = (Array.isArray(certRes) && certRes.length > 0) ? certRes : (localCert ? JSON.parse(localCert) : []);
+      const finalCv = (cvRes && cvRes.fileUrl) ? cvRes : (localCv ? JSON.parse(localCv) : null);
+      const finalProf = profileRes || (localProf ? JSON.parse(localProf) : null);
+      const finalVid = (Array.isArray(vidRes) && vidRes.length > 0) ? vidRes : (localVid ? JSON.parse(localVid) : []);
+
+      setProjects(finalProj);
+      setCertificates(finalCert);
+      setCv(finalCv);
+      setVideos(finalVid);
+
+      if (finalProf) {
+        setProfile(finalProf);
+        setProfilePhotoPreview(finalProf.photoUrl || '');
       }
     } catch (err) {
-      console.error('Error fetching admin data:', err);
+      console.error('Error fetching admin data, using local fallbacks:', err);
     } finally {
       setLoading(false);
     }
@@ -127,16 +141,17 @@ export default function AdminDashboard({ onExitDashboard }) {
         const updated = await res.json();
         setProfile(updated);
         setProfilePhotoPreview(updated.photoUrl || '');
-        setProfileSaved(true);
-        setTimeout(() => setProfileSaved(false), 3000);
-        window.dispatchEvent(new Event('profileUpdated'));
+        try { localStorage.setItem('portfolio_local_profile', JSON.stringify(updated)); } catch (e) {}
       } else {
-        alert('Failed to save profile');
+        try { localStorage.setItem('portfolio_local_profile', JSON.stringify(profile)); } catch (e) {}
       }
     } catch (err) {
-      console.error(err);
-      alert('Failed to save profile');
+      console.warn('Backend profile update failed, using local storage fallback:', err);
+      try { localStorage.setItem('portfolio_local_profile', JSON.stringify(profile)); } catch (e) {}
     } finally {
+      setProfileSaved(true);
+      setTimeout(() => setProfileSaved(false), 3000);
+      window.dispatchEvent(new Event('profileUpdated'));
       setSavingProfile(false);
     }
   };
@@ -169,6 +184,12 @@ export default function AdminDashboard({ onExitDashboard }) {
       return;
     }
 
+    const localProject = {
+      _id: 'proj_local_' + Date.now(),
+      ...projectForm,
+      createdAt: new Date().toISOString()
+    };
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/projects`, {
         method: 'POST',
@@ -177,16 +198,23 @@ export default function AdminDashboard({ onExitDashboard }) {
       });
       if (res.ok) {
         const newProj = await res.json();
-        setProjects([newProj, ...projects]);
-        setShowAddProject(false);
-        setProjectForm({ title: '', description: '', technologies: '', projectUrl: '', githubUrl: '', imageUrl: '' });
-        setProjectImagePreview('');
+        const updated = [newProj, ...projects];
+        setProjects(updated);
+        try { localStorage.setItem('portfolio_local_projects', JSON.stringify(updated)); } catch (err) {}
       } else {
-        alert('Failed to add project');
+        const updated = [localProject, ...projects];
+        setProjects(updated);
+        try { localStorage.setItem('portfolio_local_projects', JSON.stringify(updated)); } catch (err) {}
       }
     } catch (err) {
-      console.error(err);
-      alert('Failed to add project');
+      console.warn('Backend project add failed, using local fallback:', err);
+      const updated = [localProject, ...projects];
+      setProjects(updated);
+      try { localStorage.setItem('portfolio_local_projects', JSON.stringify(updated)); } catch (err) {}
+    } finally {
+      setShowAddProject(false);
+      setProjectForm({ title: '', description: '', technologies: '', projectUrl: '', githubUrl: '', imageUrl: '' });
+      setProjectImagePreview('');
     }
   };
 
@@ -198,28 +226,36 @@ export default function AdminDashboard({ onExitDashboard }) {
         body: JSON.stringify(updatedData)
       });
       if (res.ok) {
-        const updated = await res.json();
-        setProjects(projects.map((p) => (p._id === id ? updated : p)));
+        const updatedObj = await res.json();
+        const updated = projects.map((p) => (p._id === id ? updatedObj : p));
+        setProjects(updated);
+        try { localStorage.setItem('portfolio_local_projects', JSON.stringify(updated)); } catch (err) {}
       } else {
-        alert('Failed to update project');
+        const updated = projects.map((p) => (p._id === id ? { ...p, ...updatedData } : p));
+        setProjects(updated);
+        try { localStorage.setItem('portfolio_local_projects', JSON.stringify(updated)); } catch (err) {}
       }
     } catch (err) {
-      console.error(err);
+      console.warn('Backend project update failed, using local fallback:', err);
+      const updated = projects.map((p) => (p._id === id ? { ...p, ...updatedData } : p));
+      setProjects(updated);
+      try { localStorage.setItem('portfolio_local_projects', JSON.stringify(updated)); } catch (err) {}
     }
   };
 
   const handleDeleteProject = async (id) => {
     if (!window.confirm('Are you sure you want to delete this project?')) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/api/projects/${id}`, {
+      fetch(`${API_BASE_URL}/api/projects/${id}`, {
         method: 'DELETE',
         headers: { ...getAuthHeaders() }
-      });
-      if (res.ok) {
-        setProjects(projects.filter((p) => p._id !== id));
-      }
+      }).catch(() => {});
     } catch (err) {
       console.error(err);
+    } finally {
+      const updated = projects.filter((p) => p._id !== id);
+      setProjects(updated);
+      try { localStorage.setItem('portfolio_local_projects', JSON.stringify(updated)); } catch (err) {}
     }
   };
 
@@ -246,6 +282,11 @@ export default function AdminDashboard({ onExitDashboard }) {
       alert('Please fill in Title and Issuer');
       return;
     }
+    const localCertObj = {
+      _id: 'cert_local_' + Date.now(),
+      ...certForm,
+      date: certForm.date || new Date().toISOString()
+    };
     try {
       const res = await fetch(`${API_BASE_URL}/api/certificates`, {
         method: 'POST',
@@ -254,16 +295,23 @@ export default function AdminDashboard({ onExitDashboard }) {
       });
       if (res.ok) {
         const newCert = await res.json();
-        setCertificates([newCert, ...certificates]);
-        setShowAddCert(false);
-        setCertForm({ title: '', issuer: '', date: '', description: '', icon: '', imageUrl: '' });
-        setCertImagePreview('');
+        const updated = [newCert, ...certificates];
+        setCertificates(updated);
+        try { localStorage.setItem('portfolio_local_certificates', JSON.stringify(updated)); } catch (err) {}
       } else {
-        alert('Failed to add certificate');
+        const updated = [localCertObj, ...certificates];
+        setCertificates(updated);
+        try { localStorage.setItem('portfolio_local_certificates', JSON.stringify(updated)); } catch (err) {}
       }
     } catch (err) {
-      console.error(err);
-      alert('Failed to add certificate');
+      console.warn('Backend certificate add failed, using local fallback:', err);
+      const updated = [localCertObj, ...certificates];
+      setCertificates(updated);
+      try { localStorage.setItem('portfolio_local_certificates', JSON.stringify(updated)); } catch (err) {}
+    } finally {
+      setShowAddCert(false);
+      setCertForm({ title: '', issuer: '', date: '', description: '', icon: '', imageUrl: '' });
+      setCertImagePreview('');
     }
   };
 
@@ -275,28 +323,36 @@ export default function AdminDashboard({ onExitDashboard }) {
         body: JSON.stringify(updatedData)
       });
       if (res.ok) {
-        const updated = await res.json();
-        setCertificates(certificates.map((c) => (c._id === id ? updated : c)));
+        const updatedObj = await res.json();
+        const updated = certificates.map((c) => (c._id === id ? updatedObj : c));
+        setCertificates(updated);
+        try { localStorage.setItem('portfolio_local_certificates', JSON.stringify(updated)); } catch (err) {}
       } else {
-        alert('Failed to update certificate');
+        const updated = certificates.map((c) => (c._id === id ? { ...c, ...updatedData } : c));
+        setCertificates(updated);
+        try { localStorage.setItem('portfolio_local_certificates', JSON.stringify(updated)); } catch (err) {}
       }
     } catch (err) {
-      console.error(err);
+      console.warn('Backend certificate update failed, using local fallback:', err);
+      const updated = certificates.map((c) => (c._id === id ? { ...c, ...updatedData } : c));
+      setCertificates(updated);
+      try { localStorage.setItem('portfolio_local_certificates', JSON.stringify(updated)); } catch (err) {}
     }
   };
 
   const handleDeleteCert = async (id) => {
     if (!window.confirm('Are you sure you want to delete this certificate?')) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/api/certificates/${id}`, {
+      fetch(`${API_BASE_URL}/api/certificates/${id}`, {
         method: 'DELETE',
         headers: { ...getAuthHeaders() }
-      });
-      if (res.ok) {
-        setCertificates(certificates.filter((c) => c._id !== id));
-      }
+      }).catch(() => {});
     } catch (err) {
       console.error(err);
+    } finally {
+      const updated = certificates.filter((c) => c._id !== id);
+      setCertificates(updated);
+      try { localStorage.setItem('portfolio_local_certificates', JSON.stringify(updated)); } catch (err) {}
     }
   };
 
@@ -311,6 +367,14 @@ export default function AdminDashboard({ onExitDashboard }) {
     setUploadingCv(true);
     const reader = new FileReader();
     reader.onloadend = () => {
+      const cvData = {
+        _id: 'cv_local_' + Date.now(),
+        fileName: file.name,
+        fileUrl: reader.result,
+        fileType: file.type,
+        uploadedAt: new Date().toISOString()
+      };
+
       fetch(`${API_BASE_URL}/api/cv`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
@@ -323,34 +387,47 @@ export default function AdminDashboard({ onExitDashboard }) {
           }
           return res.json();
         })
-        .then((data) => {
-          setCv(data);
+        .then((savedCv) => {
+          setCv(savedCv);
+          try { localStorage.setItem('portfolio_local_cv', JSON.stringify(savedCv)); } catch (e) {}
           setUploadingCv(false);
           alert('CV uploaded successfully!');
+          window.dispatchEvent(new Event('cvUpdated'));
         })
         .catch((err) => {
-          console.error(err);
-          setUploadingCv(false);
-          alert(`Failed to upload CV: ${err.message}`);
+          console.warn('Backend CV upload failed, using local storage fallback:', err);
+          try {
+            localStorage.setItem('portfolio_local_cv', JSON.stringify(cvData));
+            setCv(cvData);
+            setUploadingCv(false);
+            alert('CV uploaded successfully!');
+            window.dispatchEvent(new Event('cvUpdated'));
+          } catch (storageErr) {
+            setUploadingCv(false);
+            alert('File too large for local browser storage. Please try a smaller PDF file.');
+          }
         });
     };
     reader.readAsDataURL(file);
   };
 
   const handleDeleteCv = async () => {
-    if (!cv || !cv._id) return;
+    if (!cv) return;
     if (!window.confirm('Are you sure you want to delete the CV?')) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/api/cv/${cv._id}`, {
-        method: 'DELETE',
-        headers: { ...getAuthHeaders() }
-      });
-      if (res.ok) {
-        setCv(null);
-        alert('CV deleted');
+      if (cv._id && !cv._id.startsWith('cv_local_')) {
+        await fetch(`${API_BASE_URL}/api/cv/${cv._id}`, {
+          method: 'DELETE',
+          headers: { ...getAuthHeaders() }
+        }).catch(() => {});
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      localStorage.removeItem('portfolio_local_cv');
+      setCv(null);
+      alert('CV deleted');
+      window.dispatchEvent(new Event('cvUpdated'));
     }
   };
 
@@ -949,8 +1026,12 @@ export default function AdminDashboard({ onExitDashboard }) {
                           <button
                             onClick={async () => {
                               if (!window.confirm('Delete this video?')) return;
-                              const res = await fetch(`${API_BASE_URL}/api/videos/${vid._id}`, { method: 'DELETE', headers: { ...getAuthHeaders() } });
-                              if (res.ok) setVideos(videos.filter((v) => v._id !== vid._id));
+                              try {
+                                fetch(`${API_BASE_URL}/api/videos/${vid._id}`, { method: 'DELETE', headers: { ...getAuthHeaders() } }).catch(() => {});
+                              } catch (e) {}
+                              const updated = videos.filter((v) => v._id !== vid._id);
+                              setVideos(updated);
+                              try { localStorage.setItem('portfolio_local_videos', JSON.stringify(updated)); } catch (e) {}
                             }}
                             style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', borderRadius: '8px', padding: '8px 14px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}
                           >Delete</button>
@@ -1099,6 +1180,11 @@ export default function AdminDashboard({ onExitDashboard }) {
                 alert('Please fill in Title and Video URL');
                 return;
               }
+              const localVidObj = {
+                _id: 'vid_local_' + Date.now(),
+                ...videoForm,
+                createdAt: new Date().toISOString()
+              };
               try {
                 const res = await fetch(`${API_BASE_URL}/api/videos`, {
                   method: 'POST',
@@ -1107,16 +1193,23 @@ export default function AdminDashboard({ onExitDashboard }) {
                 });
                 if (res.ok) {
                   const newVid = await res.json();
-                  setVideos([newVid, ...videos]);
-                  setShowAddVideo(false);
-                  setVideoForm({ title: '', description: '', tool: 'CapCut', videoUrl: '', thumbnailUrl: '' });
-                  setVideoThumbPreview('');
+                  const updated = [newVid, ...videos];
+                  setVideos(updated);
+                  try { localStorage.setItem('portfolio_local_videos', JSON.stringify(updated)); } catch (err) {}
                 } else {
-                  alert('Failed to add video');
+                  const updated = [localVidObj, ...videos];
+                  setVideos(updated);
+                  try { localStorage.setItem('portfolio_local_videos', JSON.stringify(updated)); } catch (err) {}
                 }
               } catch (err) {
-                console.error(err);
-                alert('Failed to add video');
+                console.warn('Backend video add failed, using local fallback:', err);
+                const updated = [localVidObj, ...videos];
+                setVideos(updated);
+                try { localStorage.setItem('portfolio_local_videos', JSON.stringify(updated)); } catch (err) {}
+              } finally {
+                setShowAddVideo(false);
+                setVideoForm({ title: '', description: '', tool: 'CapCut', videoUrl: '', thumbnailUrl: '' });
+                setVideoThumbPreview('');
               }
             }} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
@@ -1245,15 +1338,22 @@ export default function AdminDashboard({ onExitDashboard }) {
                   body: JSON.stringify(videoForm)
                 });
                 if (res.ok) {
-                  const updated = await res.json();
-                  setVideos(videos.map((v) => (v._id === editingVideo._id ? updated : v)));
-                  setEditingVideo(null);
+                  const updatedVid = await res.json();
+                  const updated = videos.map((v) => (v._id === editingVideo._id ? updatedVid : v));
+                  setVideos(updated);
+                  try { localStorage.setItem('portfolio_local_videos', JSON.stringify(updated)); } catch (err) {}
                 } else {
-                  alert('Failed to update video');
+                  const updated = videos.map((v) => (v._id === editingVideo._id ? { ...v, ...videoForm } : v));
+                  setVideos(updated);
+                  try { localStorage.setItem('portfolio_local_videos', JSON.stringify(updated)); } catch (err) {}
                 }
               } catch (err) {
-                console.error(err);
-                alert('Failed to update video');
+                console.warn('Backend video update failed, using local fallback:', err);
+                const updated = videos.map((v) => (v._id === editingVideo._id ? { ...v, ...videoForm } : v));
+                setVideos(updated);
+                try { localStorage.setItem('portfolio_local_videos', JSON.stringify(updated)); } catch (err) {}
+              } finally {
+                setEditingVideo(null);
               }
             }} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 

@@ -50,11 +50,18 @@ export default function VideoSection() {
     fetch(`${API_BASE_URL}/api/videos`)
       .then((res) => res.json())
       .then((data) => {
-        setVideos(Array.isArray(data) ? data : []);
+        if (Array.isArray(data) && data.length > 0) {
+          setVideos(data);
+          try { localStorage.setItem('portfolio_local_videos', JSON.stringify(data)); } catch (e) {}
+        } else {
+          const local = localStorage.getItem('portfolio_local_videos');
+          setVideos(local ? JSON.parse(local) : (Array.isArray(data) ? data : []));
+        }
         setLoading(false);
       })
       .catch(() => {
-        setVideos([]);
+        const local = localStorage.getItem('portfolio_local_videos');
+        setVideos(local ? JSON.parse(local) : []);
         setLoading(false);
       });
   };
