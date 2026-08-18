@@ -666,12 +666,21 @@ export default function AdminDashboard({ onExitDashboard }) {
                     <div style={{
                       width: '100%',
                       height: '160px',
-                      background: proj.imageUrl ? `url(${proj.imageUrl}) center/cover no-repeat` : 'linear-gradient(135deg, #1e2029 0%, #0b0c10 100%)',
+                      background: 'linear-gradient(135deg, #1e2029 0%, #0b0c10 100%)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
+                      position: 'relative',
+                      overflow: 'hidden',
                       borderBottom: '1px solid var(--border-color)'
                     }}>
+                      {proj.imageUrl && (
+                        <img
+                          src={proj.imageUrl}
+                          alt={proj.title}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      )}
                     </div>
 
                     <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -894,12 +903,17 @@ export default function AdminDashboard({ onExitDashboard }) {
                       {/* Thumbnail */}
                       <div style={{
                         width: '100%', height: '160px',
-                        background: vid.thumbnailUrl
-                          ? `url(${getFullUrl(vid.thumbnailUrl)}) center/cover no-repeat`
-                          : 'linear-gradient(135deg, #0d1117, #161b22)',
+                        background: 'linear-gradient(135deg, #0d1117, #161b22)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        position: 'relative', borderBottom: '1px solid var(--border-color)'
+                        position: 'relative', overflow: 'hidden', borderBottom: '1px solid var(--border-color)'
                       }}>
+                        {vid.thumbnailUrl && (
+                          <img
+                            src={getFullUrl(vid.thumbnailUrl)}
+                            alt={vid.title}
+                            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
+                        )}
                         <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)' }} />
                         <div style={{
                           position: 'relative', zIndex: 2,
@@ -1059,6 +1073,7 @@ export default function AdminDashboard({ onExitDashboard }) {
             </form>
           </div>
         </div>
+      )}
       {/* ===== ADD VIDEO MODAL ===== */}
       {showAddVideo && (
         <div style={{

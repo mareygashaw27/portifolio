@@ -141,12 +141,23 @@ export default function VideoSection() {
                 {/* Thumbnail / preview */}
                 <div style={{
                   position: 'relative', width: '100%', height: '185px',
-                  background: fullThumbUrl
-                    ? `url(${fullThumbUrl}) center/cover no-repeat`
-                    : 'linear-gradient(135deg, #0d1117 0%, #161b22 100%)',
+                  background: 'linear-gradient(135deg, #0d1117 0%, #161b22 100%)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   overflow: 'hidden'
                 }}>
+                  {fullThumbUrl && (
+                    <img
+                      src={fullThumbUrl}
+                      alt={video.title}
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
+                    />
+                  )}
                   {/* Dark overlay */}
                   <div style={{
                     position: 'absolute', inset: 0,

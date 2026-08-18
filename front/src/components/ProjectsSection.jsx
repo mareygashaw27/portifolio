@@ -3,6 +3,9 @@ import React from 'react';
 export default function ProjectsSection({ projects, loading, fetchProjects }) {
   return (
     <section id="projects" style={{ marginBottom: "80px" }}>
+      <h2 style={{ fontSize: "28px", fontWeight: "700", marginBottom: "30px", textAlign: "center" }}>
+        <span className="gradient-text">Featured Projects</span>
+      </h2>
 
       {loading ? (
         <div style={{ textAlign: "center", padding: "60px 0", color: "var(--text-sub)" }}>
@@ -26,13 +29,25 @@ export default function ProjectsSection({ projects, loading, fetchProjects }) {
               <div style={{
                 width: "100%",
                 height: "190px",
-                background: item.imageUrl ? `url(${item.imageUrl}) center/cover no-repeat` : "linear-gradient(135deg, #1e2029 0%, #0b0c10 100%)",
+                background: "linear-gradient(135deg, #1e2029 0%, #0b0c10 100%)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 position: "relative",
+                overflow: "hidden",
                 borderBottom: "1px solid var(--border-color)"
               }}>
+                {item.imageUrl && (
+                  <img
+                    src={item.imageUrl}
+                    alt={item.title}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover"
+                    }}
+                  />
+                )}
               </div>
 
               {/* Card Content */}

@@ -60,6 +60,9 @@ export default function CvSection() {
 
   return (
     <section id="cv" style={{ marginBottom: "80px" }}>
+      <h2 style={{ fontSize: "28px", fontWeight: "700", marginBottom: "30px", textAlign: "center" }}>
+        <span className="gradient-text">Curriculum Vitae (CV)</span>
+      </h2>
       {/* Loading State */}
       {loading && (
         <div style={{ textAlign: "center", padding: "60px 0", color: "var(--text-sub)" }}>
