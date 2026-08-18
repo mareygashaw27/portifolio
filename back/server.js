@@ -14,8 +14,11 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB Database
-connectDB();
+// Ensure DB connection for incoming requests
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
 
 // Middleware
 app.use(cors({
@@ -41,7 +44,10 @@ app.use("/api/cv", cvRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/videos", videoRoutes);
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV !== "production" || require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;
