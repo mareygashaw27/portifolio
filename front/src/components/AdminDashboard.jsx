@@ -316,19 +316,22 @@ export default function AdminDashboard({ onExitDashboard }) {
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({ fileName: file.name, fileUrl: reader.result, fileType: file.type })
       })
-        .then((res) => {
-          if (!res.ok) throw new Error('Upload failed');
+        .then(async (res) => {
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.message || errData.error || 'Upload failed');
+          }
           return res.json();
         })
         .then((data) => {
           setCv(data);
           setUploadingCv(false);
-          alert('CV uploaded successfully');
+          alert('CV uploaded successfully!');
         })
         .catch((err) => {
           console.error(err);
           setUploadingCv(false);
-          alert('Failed to upload CV');
+          alert(`Failed to upload CV: ${err.message}`);
         });
     };
     reader.readAsDataURL(file);
@@ -1056,44 +1059,35 @@ export default function AdminDashboard({ onExitDashboard }) {
             </form>
           </div>
         </div>
-      )}
       {/* ===== ADD VIDEO MODAL ===== */}
       {showAddVideo && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)',
+          background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(8px)',
           zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
         }}>
           <div className="glass-card animate-fade-in" style={{
-            width: '100%', maxWidth: '540px', padding: '30px',
-            background: '#161821', maxHeight: '92vh', overflowY: 'auto'
+            width: '100%', maxWidth: '520px', padding: '30px',
+            background: '#161821', maxHeight: '90vh', overflowY: 'auto'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3 style={{ fontSize: '20px', fontWeight: '700' }}>🎬 Add Video</h3>
-              <button onClick={() => { setShowAddVideo(false); setVideoForm({ title: '', description: '', tool: 'CapCut', videoUrl: '', thumbnailUrl: '' }); setVideoThumbPreview(''); setVideoInputMode('link'); }}
-                style={{ background: 'none', border: 'none', color: 'var(--text-sub)', fontSize: '20px', cursor: 'pointer' }}>✕</button>
-            </div>
-
-            {/* Mode Toggle */}
-            <div style={{ display: 'flex', gap: '0', marginBottom: '20px', borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
-              <button type="button" onClick={() => { setVideoInputMode('link'); setVideoForm(f => ({ ...f, videoUrl: '' })); }}
-                style={{ flex: 1, padding: '10px', border: 'none', borderRadius: '0', cursor: 'pointer', fontWeight: '700', fontSize: '13px', background: videoInputMode === 'link' ? 'linear-gradient(135deg,#00c4cc,#0095a8)' : 'rgba(0,0,0,0.3)', color: videoInputMode === 'link' ? '#fff' : 'var(--text-sub)' }}>
-                🔗 Link (YouTube / TikTok)
-              </button>
-              <button type="button" onClick={() => { setVideoInputMode('file'); setVideoForm(f => ({ ...f, videoUrl: '' })); }}
-                style={{ flex: 1, padding: '10px', border: 'none', borderRadius: '0', cursor: 'pointer', fontWeight: '700', fontSize: '13px', background: videoInputMode === 'file' ? 'linear-gradient(135deg,#a855f7,#7c3aed)' : 'rgba(0,0,0,0.3)', color: videoInputMode === 'file' ? '#fff' : 'var(--text-sub)' }}>
-                📁 Upload File
-              </button>
+              <h3 style={{ fontSize: '20px', fontWeight: '700' }}>Add New Video</h3>
+              <button
+                onClick={() => setShowAddVideo(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-sub)', fontSize: '20px', cursor: 'pointer' }}
+              >X</button>
             </div>
 
             <form onSubmit={async (e) => {
               e.preventDefault();
-              if (!videoForm.title) { alert('Title is required'); return; }
-              if (!videoForm.videoUrl) { alert(videoInputMode === 'link' ? 'Please enter a video URL' : 'Please upload a video file'); return; }
-              setUploadingVideo(true);
+              if (!videoForm.title || !videoForm.videoUrl) {
+                alert('Please fill in Title and Video URL');
+                return;
+              }
               try {
                 const res = await fetch(`${API_BASE_URL}/api/videos`, {
-                  method: 'POST', headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
                   body: JSON.stringify(videoForm)
                 });
                 if (res.ok) {
@@ -1102,96 +1096,101 @@ export default function AdminDashboard({ onExitDashboard }) {
                   setShowAddVideo(false);
                   setVideoForm({ title: '', description: '', tool: 'CapCut', videoUrl: '', thumbnailUrl: '' });
                   setVideoThumbPreview('');
-                  setVideoInputMode('link');
-                } else { alert('Failed to save video'); }
-              } catch { alert('Error saving video'); }
-              finally { setUploadingVideo(false); }
+                } else {
+                  alert('Failed to add video');
+                }
+              } catch (err) {
+                console.error(err);
+                alert('Failed to add video');
+              }
             }} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-              {/* Title */}
               <div>
                 <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600' }}>Title *</label>
-                <input type="text" required placeholder="e.g. Travel Reel - Ethiopia" value={videoForm.title}
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. CapCut Video Reel"
+                  value={videoForm.title}
                   onChange={(e) => setVideoForm({ ...videoForm, title: e.target.value })}
-                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(0,0,0,0.4)', color: '#fff', boxSizing: 'border-box' }} />
+                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(0, 0, 0, 0.4)', color: '#fff' }}
+                />
               </div>
 
-              {/* Video Input — Link or File */}
-              {videoInputMode === 'link' ? (
-                <div>
-                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600' }}>Video URL * (YouTube / TikTok / Vimeo)</label>
-                  <input type="url" required placeholder="https://youtube.com/watch?v=..." value={videoForm.videoUrl}
-                    onChange={(e) => setVideoForm({ ...videoForm, videoUrl: e.target.value })}
-                    style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(0,0,0,0.4)', color: '#fff', boxSizing: 'border-box' }} />
-                </div>
-              ) : (
-                <div>
-                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600' }}>Upload Video File * (MP4, WebM, MOV — max 100MB)</label>
-                  <input
-                    type="file"
-                    accept="video/mp4,video/webm,video/quicktime,video/ogg,video/*"
-                    onChange={(e) => {
-                      const file = e.target.files[0];
-                      if (!file) return;
-                      if (file.size > 100 * 1024 * 1024) { alert('Video file must be under 100MB'); e.target.value = ''; return; }
-                      setUploadingVideo(true);
-                      const reader = new FileReader();
-                      reader.onloadend = () => {
-                        setVideoForm((prev) => ({ ...prev, videoUrl: reader.result }));
-                        setUploadingVideo(false);
-                      };
-                      reader.onerror = () => { alert('Failed to read file'); setUploadingVideo(false); };
-                      reader.readAsDataURL(file);
-                    }}
-                    style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '2px dashed rgba(168,85,247,0.5)', background: 'rgba(168,85,247,0.05)', color: '#ccc', boxSizing: 'border-box', cursor: 'pointer' }}
-                  />
-                  {uploadingVideo && <p style={{ color: '#a855f7', fontSize: '13px', marginTop: '8px' }}>⏳ Reading video file...</p>}
-                  {videoForm.videoUrl?.startsWith('data:video') && !uploadingVideo && (
-                    <p style={{ color: '#10b981', fontSize: '13px', marginTop: '8px' }}>✅ Video file loaded — ready to save</p>
-                  )}
-                </div>
-              )}
-
-              {/* Tool */}
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600' }}>Editing Tool</label>
-                <select value={videoForm.tool} onChange={(e) => setVideoForm({ ...videoForm, tool: e.target.value })}
-                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(0,0,0,0.4)', color: '#fff' }}>
-                  <option>CapCut</option>
-                  <option>Premiere Pro</option>
-                  <option>After Effects</option>
-                  <option>DaVinci</option>
-                  <option>iMovie</option>
-                  <option>Other</option>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600' }}>TikTok / YouTube Video URL *</label>
+                <input
+                  type="url"
+                  required
+                  placeholder="https://www.tiktok.com/@user/video/..."
+                  value={videoForm.videoUrl}
+                  onChange={(e) => setVideoForm({ ...videoForm, videoUrl: e.target.value })}
+                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(0, 0, 0, 0.4)', color: '#fff' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600' }}>Tool Used</label>
+                <select
+                  value={videoForm.tool}
+                  onChange={(e) => setVideoForm({ ...videoForm, tool: e.target.value })}
+                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(0, 0, 0, 0.4)', color: '#fff' }}
+                >
+                  <option value="CapCut">CapCut</option>
+                  <option value="Premiere Pro">Premiere Pro</option>
+                  <option value="After Effects">After Effects</option>
+                  <option value="DaVinci">DaVinci</option>
+                  <option value="iMovie">iMovie</option>
+                  <option value="Other">Other</option>
                 </select>
               </div>
 
-              {/* Description */}
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600' }}>Description</label>
-                <textarea rows="3" placeholder="Short description..." value={videoForm.description}
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600' }}>Description (optional)</label>
+                <textarea
+                  rows="3"
+                  placeholder="Short description of the video..."
+                  value={videoForm.description}
                   onChange={(e) => setVideoForm({ ...videoForm, description: e.target.value })}
-                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(0,0,0,0.4)', color: '#fff', resize: 'vertical', boxSizing: 'border-box' }} />
+                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(0, 0, 0, 0.4)', color: '#fff', resize: 'vertical' }}
+                />
               </div>
 
-              {/* Thumbnail */}
               <div>
                 <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600' }}>Thumbnail Image (optional)</label>
-                <input type="file" accept="image/*" onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (!file) return;
-                  if (file.size > 5 * 1024 * 1024) { alert('Max 5MB'); return; }
-                  const reader = new FileReader();
-                  reader.onloadend = () => { setVideoThumbPreview(reader.result); setVideoForm((prev) => ({ ...prev, thumbnailUrl: reader.result })); };
-                  reader.readAsDataURL(file);
-                }} style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(0,0,0,0.4)', color: '#ccc' }} />
-                {videoThumbPreview && <img src={videoThumbPreview} alt="Preview" style={{ marginTop: '10px', maxHeight: '100px', borderRadius: '8px' }} />}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      if (file.size > 5 * 1024 * 1024) {
+                        alert('Image size must be less than 5MB');
+                        return;
+                      }
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setVideoThumbPreview(reader.result);
+                        setVideoForm((prev) => ({ ...prev, thumbnailUrl: reader.result }));
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(0, 0, 0, 0.4)', color: '#ccc' }}
+                />
+                {videoThumbPreview && (
+                  <div style={{ marginTop: '10px', textAlign: 'center' }}>
+                    <img src={videoThumbPreview} alt="Preview" style={{ maxHeight: '100px', borderRadius: '8px' }} />
+                  </div>
+                )}
               </div>
 
-              <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
-                <button type="button" className="btn-secondary" onClick={() => { setShowAddVideo(false); setVideoForm({ title: '', description: '', tool: 'CapCut', videoUrl: '', thumbnailUrl: '' }); setVideoThumbPreview(''); setVideoInputMode('link'); }} style={{ flex: 1, justifyContent: 'center' }}>Cancel</button>
-                <button type="submit" disabled={uploadingVideo} className="btn-primary" style={{ flex: 1, justifyContent: 'center', opacity: uploadingVideo ? 0.6 : 1 }}>
-                  {uploadingVideo ? '⏳ Loading...' : '💾 Save Video'}
+              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                <button type="button" className="btn-secondary" onClick={() => setShowAddVideo(false)} style={{ flex: 1, justifyContent: 'center' }}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn-primary" style={{ flex: 1, justifyContent: 'center' }}>
+                  Save Video
                 </button>
               </div>
             </form>
@@ -1203,134 +1202,129 @@ export default function AdminDashboard({ onExitDashboard }) {
       {editingVideo && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)',
+          background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(8px)',
           zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
         }}>
           <div className="glass-card animate-fade-in" style={{
-            width: '100%', maxWidth: '540px', padding: '30px',
-            background: '#161821', maxHeight: '92vh', overflowY: 'auto'
+            width: '100%', maxWidth: '520px', padding: '30px',
+            background: '#161821', maxHeight: '90vh', overflowY: 'auto'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3 style={{ fontSize: '20px', fontWeight: '700' }}>✏️ Edit Video</h3>
-              <button onClick={() => { setEditingVideo(null); setVideoThumbPreview(''); setVideoInputMode('link'); }}
-                style={{ background: 'none', border: 'none', color: 'var(--text-sub)', fontSize: '20px', cursor: 'pointer' }}>✕</button>
-            </div>
-
-            {/* Current video source indicator */}
-            <div style={{ marginBottom: '16px', padding: '10px 14px', borderRadius: '8px', background: 'rgba(0,196,204,0.08)', border: '1px solid rgba(0,196,204,0.25)', fontSize: '13px', color: '#00c4cc' }}>
-              {videoForm.videoUrl?.startsWith('data:video') ? '📁 Currently: Uploaded file' : '🔗 Currently: Link — ' + videoForm.videoUrl?.slice(0, 50) + (videoForm.videoUrl?.length > 50 ? '...' : '')}
-            </div>
-
-            {/* Mode Toggle */}
-            <div style={{ display: 'flex', gap: '0', marginBottom: '20px', borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
-              <button type="button" onClick={() => { setVideoInputMode('link'); setVideoForm(f => ({ ...f, videoUrl: editingVideo.videoUrl?.startsWith('data:video') ? '' : editingVideo.videoUrl || '' })); }}
-                style={{ flex: 1, padding: '10px', border: 'none', cursor: 'pointer', fontWeight: '700', fontSize: '13px', background: videoInputMode === 'link' ? 'linear-gradient(135deg,#00c4cc,#0095a8)' : 'rgba(0,0,0,0.3)', color: videoInputMode === 'link' ? '#fff' : 'var(--text-sub)' }}>
-                🔗 Change to Link
-              </button>
-              <button type="button" onClick={() => { setVideoInputMode('file'); }}
-                style={{ flex: 1, padding: '10px', border: 'none', cursor: 'pointer', fontWeight: '700', fontSize: '13px', background: videoInputMode === 'file' ? 'linear-gradient(135deg,#a855f7,#7c3aed)' : 'rgba(0,0,0,0.3)', color: videoInputMode === 'file' ? '#fff' : 'var(--text-sub)' }}>
-                📁 Replace with File
-              </button>
+              <h3 style={{ fontSize: '20px', fontWeight: '700' }}>Edit Video</h3>
+              <button
+                onClick={() => setEditingVideo(null)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-sub)', fontSize: '20px', cursor: 'pointer' }}
+              >X</button>
             </div>
 
             <form onSubmit={async (e) => {
               e.preventDefault();
-              if (!videoForm.title || !videoForm.videoUrl) { alert('Title and Video are required'); return; }
-              setUploadingVideo(true);
+              if (!videoForm.title || !videoForm.videoUrl) {
+                alert('Please fill in Title and Video URL');
+                return;
+              }
               try {
                 const res = await fetch(`${API_BASE_URL}/api/videos/${editingVideo._id}`, {
-                  method: 'PUT', headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
                   body: JSON.stringify(videoForm)
                 });
                 if (res.ok) {
                   const updated = await res.json();
                   setVideos(videos.map((v) => (v._id === editingVideo._id ? updated : v)));
                   setEditingVideo(null);
-                  setVideoThumbPreview('');
-                  setVideoInputMode('link');
-                } else { alert('Failed to update video'); }
-              } catch { alert('Error updating video'); }
-              finally { setUploadingVideo(false); }
+                } else {
+                  alert('Failed to update video');
+                }
+              } catch (err) {
+                console.error(err);
+                alert('Failed to update video');
+              }
             }} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
               <div>
                 <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600' }}>Title *</label>
-                <input type="text" required value={videoForm.title}
+                <input
+                  type="text"
+                  required
+                  value={videoForm.title}
                   onChange={(e) => setVideoForm({ ...videoForm, title: e.target.value })}
-                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(0,0,0,0.4)', color: '#fff', boxSizing: 'border-box' }} />
+                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(0, 0, 0, 0.4)', color: '#fff' }}
+                />
               </div>
 
-              {videoInputMode === 'link' ? (
-                <div>
-                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600' }}>Video URL *</label>
-                  <input type="url" required value={videoForm.videoUrl?.startsWith('data:') ? '' : videoForm.videoUrl}
-                    placeholder="https://youtube.com/watch?v=..."
-                    onChange={(e) => setVideoForm({ ...videoForm, videoUrl: e.target.value })}
-                    style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(0,0,0,0.4)', color: '#fff', boxSizing: 'border-box' }} />
-                </div>
-              ) : (
-                <div>
-                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600' }}>Upload New Video File * (max 100MB)</label>
-                  <input
-                    type="file"
-                    accept="video/mp4,video/webm,video/quicktime,video/ogg,video/*"
-                    onChange={(e) => {
-                      const file = e.target.files[0];
-                      if (!file) return;
-                      if (file.size > 100 * 1024 * 1024) { alert('Video must be under 100MB'); e.target.value = ''; return; }
-                      setUploadingVideo(true);
-                      const reader = new FileReader();
-                      reader.onloadend = () => { setVideoForm((prev) => ({ ...prev, videoUrl: reader.result })); setUploadingVideo(false); };
-                      reader.onerror = () => { alert('Failed to read file'); setUploadingVideo(false); };
-                      reader.readAsDataURL(file);
-                    }}
-                    style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '2px dashed rgba(168,85,247,0.5)', background: 'rgba(168,85,247,0.05)', color: '#ccc', boxSizing: 'border-box', cursor: 'pointer' }}
-                  />
-                  {uploadingVideo && <p style={{ color: '#a855f7', fontSize: '13px', marginTop: '8px' }}>⏳ Reading video file...</p>}
-                  {videoForm.videoUrl?.startsWith('data:video') && !uploadingVideo && (
-                    <p style={{ color: '#10b981', fontSize: '13px', marginTop: '8px' }}>✅ New file loaded — save to update</p>
-                  )}
-                </div>
-              )}
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600' }}>TikTok / YouTube Video URL *</label>
+                <input
+                  type="url"
+                  required
+                  value={videoForm.videoUrl}
+                  onChange={(e) => setVideoForm({ ...videoForm, videoUrl: e.target.value })}
+                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(0, 0, 0, 0.4)', color: '#fff' }}
+                />
+              </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600' }}>Editing Tool</label>
-                <select value={videoForm.tool} onChange={(e) => setVideoForm({ ...videoForm, tool: e.target.value })}
-                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(0,0,0,0.4)', color: '#fff' }}>
-                  <option>CapCut</option>
-                  <option>Premiere Pro</option>
-                  <option>After Effects</option>
-                  <option>DaVinci</option>
-                  <option>iMovie</option>
-                  <option>Other</option>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600' }}>Tool Used</label>
+                <select
+                  value={videoForm.tool}
+                  onChange={(e) => setVideoForm({ ...videoForm, tool: e.target.value })}
+                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(0, 0, 0, 0.4)', color: '#fff' }}
+                >
+                  <option value="CapCut">CapCut</option>
+                  <option value="Premiere Pro">Premiere Pro</option>
+                  <option value="After Effects">After Effects</option>
+                  <option value="DaVinci">DaVinci</option>
+                  <option value="iMovie">iMovie</option>
+                  <option value="Other">Other</option>
                 </select>
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600' }}>Description</label>
-                <textarea rows="3" value={videoForm.description}
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600' }}>Description (optional)</label>
+                <textarea
+                  rows="3"
+                  value={videoForm.description}
                   onChange={(e) => setVideoForm({ ...videoForm, description: e.target.value })}
-                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(0,0,0,0.4)', color: '#fff', resize: 'vertical', boxSizing: 'border-box' }} />
+                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(0, 0, 0, 0.4)', color: '#fff', resize: 'vertical' }}
+                />
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600' }}>Thumbnail Image</label>
-                <input type="file" accept="image/*" onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (!file) return;
-                  const reader = new FileReader();
-                  reader.onloadend = () => { setVideoThumbPreview(reader.result); setVideoForm((prev) => ({ ...prev, thumbnailUrl: reader.result })); };
-                  reader.readAsDataURL(file);
-                }} style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(0,0,0,0.4)', color: '#ccc' }} />
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600' }}>Thumbnail Image (optional)</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      if (file.size > 5 * 1024 * 1024) {
+                        alert('Image size must be less than 5MB');
+                        return;
+                      }
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setVideoThumbPreview(reader.result);
+                        setVideoForm((prev) => ({ ...prev, thumbnailUrl: reader.result }));
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(0, 0, 0, 0.4)', color: '#ccc' }}
+                />
                 {(videoThumbPreview || videoForm.thumbnailUrl) && (
-                  <img src={videoThumbPreview || getFullUrl(videoForm.thumbnailUrl)} alt="Preview" style={{ marginTop: '10px', maxHeight: '100px', borderRadius: '8px' }} />
+                  <div style={{ marginTop: '10px', textAlign: 'center' }}>
+                    <img src={videoThumbPreview || getFullUrl(videoForm.thumbnailUrl)} alt="Preview" style={{ maxHeight: '100px', borderRadius: '8px' }} />
+                  </div>
                 )}
               </div>
 
-              <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
-                <button type="button" className="btn-secondary" onClick={() => { setEditingVideo(null); setVideoThumbPreview(''); setVideoInputMode('link'); }} style={{ flex: 1, justifyContent: 'center' }}>Cancel</button>
-                <button type="submit" disabled={uploadingVideo} className="btn-primary" style={{ flex: 1, justifyContent: 'center', opacity: uploadingVideo ? 0.6 : 1 }}>
-                  {uploadingVideo ? '⏳ Loading...' : '💾 Update Video'}
+              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                <button type="button" className="btn-secondary" onClick={() => setEditingVideo(null)} style={{ flex: 1, justifyContent: 'center' }}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn-primary" style={{ flex: 1, justifyContent: 'center' }}>
+                  Update Video
                 </button>
               </div>
             </form>
