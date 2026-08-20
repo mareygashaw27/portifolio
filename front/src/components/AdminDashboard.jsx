@@ -5,7 +5,7 @@ import EditProjectModal from './EditProjectModal';
 import EditCertificateModal from './EditCertificateModal';
 
 export default function AdminDashboard({ onExitDashboard }) {
-  const { logout, getAuthHeaders, API_BASE_URL } = useAuth();
+  const { logout, getAuthHeaders, API_BASE_URL, isLocalToken, refreshAuth } = useAuth();
   const [activeTab, setActiveTab] = useState('projects'); // 'profile', 'projects', 'certificates', 'cv', 'videos'
 
   const getFullUrl = (url) => {
@@ -20,6 +20,7 @@ export default function AdminDashboard({ onExitDashboard }) {
   const [cv, setCv] = useState(null);
   const [loading, setLoading] = useState(false);
   const [uploadingCv, setUploadingCv] = useState(false);
+  const [backendOnline, setBackendOnline] = useState(!isLocalToken);
 
   // Video states
   const [videos, setVideos] = useState([]);
@@ -132,6 +133,17 @@ export default function AdminDashboard({ onExitDashboard }) {
     e.preventDefault();
     setSavingProfile(true);
     try {
+      // Try to get a real token if we're in offline/local mode
+      if (isLocalToken) {
+        const reconnected = await refreshAuth();
+        if (!reconnected) {
+          alert('⚠️ Cannot connect to server. Please wait for the backend to start (may take ~30 sec) then try again.');
+          setSavingProfile(false);
+          return;
+        }
+        setBackendOnline(true);
+      }
+
       const res = await fetch(`${API_BASE_URL}/api/profile`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
@@ -143,11 +155,13 @@ export default function AdminDashboard({ onExitDashboard }) {
         setProfilePhotoPreview(updated.photoUrl || '');
         try { localStorage.setItem('portfolio_local_profile', JSON.stringify(updated)); } catch (e) {}
       } else {
-        try { localStorage.setItem('portfolio_local_profile', JSON.stringify(profile)); } catch (e) {}
+        const errData = await res.json().catch(() => ({}));
+        alert('❌ Failed to save profile: ' + (errData.error || errData.message || res.status));
+        return;
       }
     } catch (err) {
-      console.warn('Backend profile update failed, using local storage fallback:', err);
-      try { localStorage.setItem('portfolio_local_profile', JSON.stringify(profile)); } catch (e) {}
+      alert('❌ Network error. Please check your connection and try again.');
+      return;
     } finally {
       setProfileSaved(true);
       setTimeout(() => setProfileSaved(false), 3000);
@@ -184,11 +198,15 @@ export default function AdminDashboard({ onExitDashboard }) {
       return;
     }
 
-    const localProject = {
-      _id: 'proj_local_' + Date.now(),
-      ...projectForm,
-      createdAt: new Date().toISOString()
-    };
+    // Try to get a real token if we're in offline/local mode
+    if (isLocalToken) {
+      const reconnected = await refreshAuth();
+      if (!reconnected) {
+        alert('⚠️ Cannot connect to server. Please wait for the backend to start (may take ~30 sec on first load) then try again.');
+        return;
+      }
+      setBackendOnline(true);
+    }
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/projects`, {
@@ -202,15 +220,13 @@ export default function AdminDashboard({ onExitDashboard }) {
         setProjects(updated);
         try { localStorage.setItem('portfolio_local_projects', JSON.stringify(updated)); } catch (err) {}
       } else {
-        const updated = [localProject, ...projects];
-        setProjects(updated);
-        try { localStorage.setItem('portfolio_local_projects', JSON.stringify(updated)); } catch (err) {}
+        const errData = await res.json().catch(() => ({}));
+        alert('❌ Failed to save project: ' + (errData.error || errData.message || res.status));
+        return;
       }
     } catch (err) {
-      console.warn('Backend project add failed, using local fallback:', err);
-      const updated = [localProject, ...projects];
-      setProjects(updated);
-      try { localStorage.setItem('portfolio_local_projects', JSON.stringify(updated)); } catch (err) {}
+      alert('❌ Network error. Please check your connection and try again.');
+      return;
     } finally {
       setShowAddProject(false);
       setProjectForm({ title: '', description: '', technologies: '', projectUrl: '', githubUrl: '', imageUrl: '' });
@@ -219,6 +235,14 @@ export default function AdminDashboard({ onExitDashboard }) {
   };
 
   const handleUpdateProject = async (id, updatedData) => {
+    if (isLocalToken) {
+      const reconnected = await refreshAuth();
+      if (!reconnected) {
+        alert('⚠️ Cannot connect to server. Please wait for the backend to start then try again.');
+        return;
+      }
+      setBackendOnline(true);
+    }
     try {
       const res = await fetch(`${API_BASE_URL}/api/projects/${id}`, {
         method: 'PUT',
@@ -231,15 +255,11 @@ export default function AdminDashboard({ onExitDashboard }) {
         setProjects(updated);
         try { localStorage.setItem('portfolio_local_projects', JSON.stringify(updated)); } catch (err) {}
       } else {
-        const updated = projects.map((p) => (p._id === id ? { ...p, ...updatedData } : p));
-        setProjects(updated);
-        try { localStorage.setItem('portfolio_local_projects', JSON.stringify(updated)); } catch (err) {}
+        const errData = await res.json().catch(() => ({}));
+        alert('❌ Failed to update project: ' + (errData.error || errData.message || res.status));
       }
     } catch (err) {
-      console.warn('Backend project update failed, using local fallback:', err);
-      const updated = projects.map((p) => (p._id === id ? { ...p, ...updatedData } : p));
-      setProjects(updated);
-      try { localStorage.setItem('portfolio_local_projects', JSON.stringify(updated)); } catch (err) {}
+      alert('❌ Network error. Please check your connection and try again.');
     }
   };
 
@@ -282,11 +302,17 @@ export default function AdminDashboard({ onExitDashboard }) {
       alert('Please fill in Title and Issuer');
       return;
     }
-    const localCertObj = {
-      _id: 'cert_local_' + Date.now(),
-      ...certForm,
-      date: certForm.date || new Date().toISOString()
-    };
+
+    // Try to reconnect if using local token
+    if (isLocalToken) {
+      const reconnected = await refreshAuth();
+      if (!reconnected) {
+        alert('⚠️ Cannot connect to server. Please wait for the backend to start (may take ~30 sec on first load) then try again.');
+        return;
+      }
+      setBackendOnline(true);
+    }
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/certificates`, {
         method: 'POST',
@@ -299,15 +325,13 @@ export default function AdminDashboard({ onExitDashboard }) {
         setCertificates(updated);
         try { localStorage.setItem('portfolio_local_certificates', JSON.stringify(updated)); } catch (err) {}
       } else {
-        const updated = [localCertObj, ...certificates];
-        setCertificates(updated);
-        try { localStorage.setItem('portfolio_local_certificates', JSON.stringify(updated)); } catch (err) {}
+        const errData = await res.json().catch(() => ({}));
+        alert('❌ Failed to save certificate: ' + (errData.error || errData.message || res.status));
+        return;
       }
     } catch (err) {
-      console.warn('Backend certificate add failed, using local fallback:', err);
-      const updated = [localCertObj, ...certificates];
-      setCertificates(updated);
-      try { localStorage.setItem('portfolio_local_certificates', JSON.stringify(updated)); } catch (err) {}
+      alert('❌ Network error. Please check your connection and try again.');
+      return;
     } finally {
       setShowAddCert(false);
       setCertForm({ title: '', issuer: '', date: '', description: '', icon: '', imageUrl: '' });
@@ -316,6 +340,14 @@ export default function AdminDashboard({ onExitDashboard }) {
   };
 
   const handleUpdateCert = async (id, updatedData) => {
+    if (isLocalToken) {
+      const reconnected = await refreshAuth();
+      if (!reconnected) {
+        alert('⚠️ Cannot connect to server. Please wait for the backend to start then try again.');
+        return;
+      }
+      setBackendOnline(true);
+    }
     try {
       const res = await fetch(`${API_BASE_URL}/api/certificates/${id}`, {
         method: 'PUT',
@@ -328,15 +360,11 @@ export default function AdminDashboard({ onExitDashboard }) {
         setCertificates(updated);
         try { localStorage.setItem('portfolio_local_certificates', JSON.stringify(updated)); } catch (err) {}
       } else {
-        const updated = certificates.map((c) => (c._id === id ? { ...c, ...updatedData } : c));
-        setCertificates(updated);
-        try { localStorage.setItem('portfolio_local_certificates', JSON.stringify(updated)); } catch (err) {}
+        const errData = await res.json().catch(() => ({}));
+        alert('❌ Failed to update certificate: ' + (errData.error || errData.message || res.status));
       }
     } catch (err) {
-      console.warn('Backend certificate update failed, using local fallback:', err);
-      const updated = certificates.map((c) => (c._id === id ? { ...c, ...updatedData } : c));
-      setCertificates(updated);
-      try { localStorage.setItem('portfolio_local_certificates', JSON.stringify(updated)); } catch (err) {}
+      alert('❌ Network error. Please check your connection and try again.');
     }
   };
 
@@ -366,47 +394,38 @@ export default function AdminDashboard({ onExitDashboard }) {
     }
     setUploadingCv(true);
     const reader = new FileReader();
-    reader.onloadend = () => {
-      const cvData = {
-        _id: 'cv_local_' + Date.now(),
-        fileName: file.name,
-        fileUrl: reader.result,
-        fileType: file.type,
-        uploadedAt: new Date().toISOString()
-      };
-
-      fetch(`${API_BASE_URL}/api/cv`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        body: JSON.stringify({ fileName: file.name, fileUrl: reader.result, fileType: file.type })
-      })
-        .then(async (res) => {
-          if (!res.ok) {
-            const errData = await res.json().catch(() => ({}));
-            throw new Error(errData.message || errData.error || 'Upload failed');
-          }
-          return res.json();
-        })
-        .then((savedCv) => {
-          setCv(savedCv);
-          try { localStorage.setItem('portfolio_local_cv', JSON.stringify(savedCv)); } catch (e) {}
+    reader.onloadend = async () => {
+      // Try to reconnect if using local token
+      if (isLocalToken) {
+        const reconnected = await refreshAuth();
+        if (!reconnected) {
           setUploadingCv(false);
-          alert('CV uploaded successfully!');
-          window.dispatchEvent(new Event('cvUpdated'));
-        })
-        .catch((err) => {
-          console.warn('Backend CV upload failed, using local storage fallback:', err);
-          try {
-            localStorage.setItem('portfolio_local_cv', JSON.stringify(cvData));
-            setCv(cvData);
-            setUploadingCv(false);
-            alert('CV uploaded successfully!');
-            window.dispatchEvent(new Event('cvUpdated'));
-          } catch (storageErr) {
-            setUploadingCv(false);
-            alert('File too large for local browser storage. Please try a smaller PDF file.');
-          }
+          alert('⚠️ Cannot connect to server. Please wait for the backend to start (may take ~30 sec on first load) then try again.');
+          return;
+        }
+        setBackendOnline(true);
+      }
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/cv`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+          body: JSON.stringify({ fileName: file.name, fileUrl: reader.result, fileType: file.type })
         });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || errData.error || 'Upload failed');
+        }
+        const savedCv = await res.json();
+        setCv(savedCv);
+        try { localStorage.setItem('portfolio_local_cv', JSON.stringify(savedCv)); } catch (e) {}
+        setUploadingCv(false);
+        alert('CV uploaded successfully!');
+        window.dispatchEvent(new Event('cvUpdated'));
+      } catch (err) {
+        setUploadingCv(false);
+        alert('❌ CV upload failed: ' + err.message + '\n\nPlease check your connection and try again.');
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -586,6 +605,28 @@ export default function AdminDashboard({ onExitDashboard }) {
 
       {/* RIGHT MAIN CONTENT AREA */}
       <main style={{ flex: 1, padding: '40px', overflowY: 'auto' }}>
+      {/* OFFLINE MODE BANNER */}
+      {isLocalToken && (
+        <div style={{
+          background: 'rgba(234, 179, 8, 0.15)',
+          border: '1px solid rgba(234, 179, 8, 0.4)',
+          borderRadius: '10px',
+          padding: '12px 18px',
+          marginBottom: '24px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px'
+        }}>
+          <span style={{ fontSize: '20px' }}>⚠️</span>
+          <div>
+            <strong style={{ color: '#fbbf24', fontSize: '14px' }}>Backend is starting up (Render cold start)</strong>
+            <p style={{ color: '#fde68a', fontSize: '12px', margin: '2px 0 0 0' }}>
+              Uploads will be blocked until the server is ready. This usually takes 30–60 seconds. Wait a moment then try uploading again.
+            </p>
+          </div>
+        </div>
+      )}
+
         {/* TAB 1: PROFILE INFO */}
         {activeTab === 'profile' && (
           <div style={{ maxWidth: '820px' }}>
@@ -1180,11 +1221,17 @@ export default function AdminDashboard({ onExitDashboard }) {
                 alert('Please fill in Title and Video URL');
                 return;
               }
-              const localVidObj = {
-                _id: 'vid_local_' + Date.now(),
-                ...videoForm,
-                createdAt: new Date().toISOString()
-              };
+
+              // Try to reconnect if using local token
+              if (isLocalToken) {
+                const reconnected = await refreshAuth();
+                if (!reconnected) {
+                  alert('⚠️ Cannot connect to server. Please wait for the backend to start (may take ~30 sec on first load) then try again.');
+                  return;
+                }
+                setBackendOnline(true);
+              }
+
               try {
                 const res = await fetch(`${API_BASE_URL}/api/videos`, {
                   method: 'POST',
@@ -1197,15 +1244,13 @@ export default function AdminDashboard({ onExitDashboard }) {
                   setVideos(updated);
                   try { localStorage.setItem('portfolio_local_videos', JSON.stringify(updated)); } catch (err) {}
                 } else {
-                  const updated = [localVidObj, ...videos];
-                  setVideos(updated);
-                  try { localStorage.setItem('portfolio_local_videos', JSON.stringify(updated)); } catch (err) {}
+                  const errData = await res.json().catch(() => ({}));
+                  alert('❌ Failed to save video: ' + (errData.error || errData.message || res.status));
+                  return;
                 }
               } catch (err) {
-                console.warn('Backend video add failed, using local fallback:', err);
-                const updated = [localVidObj, ...videos];
-                setVideos(updated);
-                try { localStorage.setItem('portfolio_local_videos', JSON.stringify(updated)); } catch (err) {}
+                alert('❌ Network error. Please check your connection and try again.');
+                return;
               } finally {
                 setShowAddVideo(false);
                 setVideoForm({ title: '', description: '', tool: 'CapCut', videoUrl: '', thumbnailUrl: '' });
@@ -1331,6 +1376,17 @@ export default function AdminDashboard({ onExitDashboard }) {
                 alert('Please fill in Title and Video URL');
                 return;
               }
+
+              // Try to reconnect if using local token
+              if (isLocalToken) {
+                const reconnected = await refreshAuth();
+                if (!reconnected) {
+                  alert('⚠️ Cannot connect to server. Please wait for the backend to start then try again.');
+                  return;
+                }
+                setBackendOnline(true);
+              }
+
               try {
                 const res = await fetch(`${API_BASE_URL}/api/videos/${editingVideo._id}`, {
                   method: 'PUT',
@@ -1343,15 +1399,11 @@ export default function AdminDashboard({ onExitDashboard }) {
                   setVideos(updated);
                   try { localStorage.setItem('portfolio_local_videos', JSON.stringify(updated)); } catch (err) {}
                 } else {
-                  const updated = videos.map((v) => (v._id === editingVideo._id ? { ...v, ...videoForm } : v));
-                  setVideos(updated);
-                  try { localStorage.setItem('portfolio_local_videos', JSON.stringify(updated)); } catch (err) {}
+                  const errData = await res.json().catch(() => ({}));
+                  alert('❌ Failed to update video: ' + (errData.error || errData.message || res.status));
                 }
               } catch (err) {
-                console.warn('Backend video update failed, using local fallback:', err);
-                const updated = videos.map((v) => (v._id === editingVideo._id ? { ...v, ...videoForm } : v));
-                setVideos(updated);
-                try { localStorage.setItem('portfolio_local_videos', JSON.stringify(updated)); } catch (err) {}
+                alert('❌ Network error. Please check your connection and try again.');
               } finally {
                 setEditingVideo(null);
               }
