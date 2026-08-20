@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Project = require("../models/Project");
 const { authMiddleware } = require("../middleware/authMiddleware");
+const { uploadToCloudinary } = require("../config/uploadHelper");
 
 // GET: Fetch all projects (Public)
 router.get("/", async (req, res) => {
@@ -16,7 +17,14 @@ router.get("/", async (req, res) => {
 // POST: Add a new project (Admin Only)
 router.post("/", authMiddleware, async (req, res) => {
   try {
-    const newProject = new Project(req.body);
+    const data = { ...req.body };
+
+    // Upload project image to Cloudinary if base64
+    if (data.imageUrl && data.imageUrl.startsWith("data:")) {
+      data.imageUrl = await uploadToCloudinary(data.imageUrl, "portfolio/projects", "image");
+    }
+
+    const newProject = new Project(data);
     const saved = await newProject.save();
     res.status(201).json(saved);
   } catch (error) {
@@ -27,7 +35,14 @@ router.post("/", authMiddleware, async (req, res) => {
 // PUT: Update a project by ID (Admin Only)
 router.put("/:id", authMiddleware, async (req, res) => {
   try {
-    const updated = await Project.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const data = { ...req.body };
+
+    // Upload project image to Cloudinary if base64
+    if (data.imageUrl && data.imageUrl.startsWith("data:")) {
+      data.imageUrl = await uploadToCloudinary(data.imageUrl, "portfolio/projects", "image");
+    }
+
+    const updated = await Project.findByIdAndUpdate(req.params.id, data, { new: true });
     if (!updated) {
       return res.status(404).json({ message: "Project not found" });
     }

@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Certificate = require("../models/Certificate");
 const { authMiddleware } = require("../middleware/authMiddleware");
+const { uploadToCloudinary } = require("../config/uploadHelper");
 
 // GET: Fetch all certificates (Public)
 router.get("/", async (req, res) => {
@@ -16,7 +17,14 @@ router.get("/", async (req, res) => {
 // POST: Add a new certificate (Admin Only)
 router.post("/", authMiddleware, async (req, res) => {
   try {
-    const newCertificate = new Certificate(req.body);
+    const data = { ...req.body };
+
+    // Upload certificate image to Cloudinary if base64
+    if (data.imageUrl && data.imageUrl.startsWith("data:")) {
+      data.imageUrl = await uploadToCloudinary(data.imageUrl, "portfolio/certificates", "image");
+    }
+
+    const newCertificate = new Certificate(data);
     const saved = await newCertificate.save();
     res.status(201).json(saved);
   } catch (error) {
@@ -27,7 +35,14 @@ router.post("/", authMiddleware, async (req, res) => {
 // PUT: Update a certificate by ID (Admin Only)
 router.put("/:id", authMiddleware, async (req, res) => {
   try {
-    const updated = await Certificate.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const data = { ...req.body };
+
+    // Upload certificate image to Cloudinary if base64
+    if (data.imageUrl && data.imageUrl.startsWith("data:")) {
+      data.imageUrl = await uploadToCloudinary(data.imageUrl, "portfolio/certificates", "image");
+    }
+
+    const updated = await Certificate.findByIdAndUpdate(req.params.id, data, { new: true });
     if (!updated) {
       return res.status(404).json({ message: "Certificate not found" });
     }

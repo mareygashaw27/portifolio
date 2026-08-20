@@ -1,0 +1,28 @@
+const cloudinary = require("./cloudinary");
+
+/**
+ * Upload a base64-encoded file to Cloudinary.
+ * If the data is already a URL (not base64), it is returned as-is.
+ *
+ * @param {string} base64Data - The base64 data URI (e.g. "data:image/png;base64,...")
+ * @param {string} folder     - Cloudinary folder to store the file in (e.g. "portfolio/videos")
+ * @param {string} [resourceType="auto"] - Cloudinary resource type: "image", "video", "raw", or "auto"
+ * @returns {Promise<string>} - The secure Cloudinary URL
+ */
+async function uploadToCloudinary(base64Data, folder, resourceType = "auto") {
+  // If it's already a URL or empty, return as-is
+  if (!base64Data || !base64Data.startsWith("data:")) return base64Data;
+
+  try {
+    const result = await cloudinary.uploader.upload(base64Data, {
+      folder: folder,
+      resource_type: resourceType,
+    });
+    return result.secure_url;
+  } catch (err) {
+    console.error("Cloudinary upload error:", err.message);
+    throw new Error("File upload to cloud failed: " + err.message);
+  }
+}
+
+module.exports = { uploadToCloudinary };

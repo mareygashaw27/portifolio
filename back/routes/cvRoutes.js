@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Cv = require("../models/Cv");
 const { authMiddleware } = require("../middleware/authMiddleware");
+const { uploadToCloudinary } = require("../config/uploadHelper");
 
 // GET: Fetch the current CV (Public)
 router.get("/", async (req, res) => {
@@ -16,9 +17,16 @@ router.get("/", async (req, res) => {
 // POST: Upload/replace CV (Admin Only)
 router.post("/", authMiddleware, async (req, res) => {
   try {
+    const data = { ...req.body };
+
+    // Upload CV PDF to Cloudinary if base64
+    if (data.fileUrl && data.fileUrl.startsWith("data:")) {
+      data.fileUrl = await uploadToCloudinary(data.fileUrl, "portfolio/cv", "raw");
+    }
+
     // Delete all previous CVs (keep only the latest)
     await Cv.deleteMany({});
-    const newCv = new Cv(req.body);
+    const newCv = new Cv(data);
     const saved = await newCv.save();
     res.status(201).json(saved);
   } catch (error) {

@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Profile = require("../models/Profile");
 const { authMiddleware } = require("../middleware/authMiddleware");
+const { uploadToCloudinary } = require("../config/uploadHelper");
 
 // GET /api/profile - Get profile (public)
 router.get("/", async (req, res) => {
@@ -40,7 +41,16 @@ router.put("/", authMiddleware, async (req, res) => {
     if (description !== undefined) profile.description = description;
     if (email !== undefined) profile.email = email;
     if (phone !== undefined) profile.phone = phone;
-    if (photoUrl !== undefined) profile.photoUrl = photoUrl;
+
+    // Upload profile photo to Cloudinary if base64
+    if (photoUrl !== undefined) {
+      if (photoUrl && photoUrl.startsWith("data:")) {
+        profile.photoUrl = await uploadToCloudinary(photoUrl, "portfolio/profile", "image");
+      } else {
+        profile.photoUrl = photoUrl;
+      }
+    }
+
     profile.updatedAt = new Date();
     await profile.save();
     res.json(profile);
