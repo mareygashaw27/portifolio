@@ -5,7 +5,7 @@ export default function CvSection() {
   const { API_BASE_URL } = useAuth();
   const [cv, setCv] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [cvFullscreen, setCvFullscreen] = useState(false);
+  const [isMobile, setIsMobile] = useState(typeof window !== "undefined" && window.innerWidth <= 768);
 
   const API_URL = `${API_BASE_URL}/api/cv`;
 
@@ -38,7 +38,14 @@ export default function CvSection() {
     fetchCv();
     const handleCvUpdated = () => fetchCv();
     window.addEventListener('cvUpdated', handleCvUpdated);
-    return () => window.removeEventListener('cvUpdated', handleCvUpdated);
+    
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('cvUpdated', handleCvUpdated);
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
 
 
@@ -130,18 +137,50 @@ export default function CvSection() {
             }}
           >
             {isPdf ? (
-              <iframe
-                src={`https://docs.google.com/gview?url=${encodeURIComponent(cv.fileUrl)}&embedded=true`}
-                style={{
-                  width: "100%",
-                  height: "80vh",
-                  minHeight: "500px",
-                  border: "none",
-                  display: "block",
-                  background: "#fff"
-                }}
-                title="CV PDF Viewer"
-              />
+              isMobile ? (
+                <div 
+                  onClick={() => window.open(cv.fileUrl, "_blank")}
+                  style={{
+                    width: "100%",
+                    padding: "60px 20px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "linear-gradient(135deg, #1e2029 0%, #0b0c10 100%)",
+                    border: "1px solid rgba(255, 255, 255, 0.05)",
+                    textAlign: "center",
+                    cursor: "pointer"
+                  }}
+                >
+                  <span style={{ fontSize: "60px", marginBottom: "16px" }}>📄</span>
+                  <h3 style={{ fontSize: "20px", fontWeight: "700", marginBottom: "8px", color: "#fff" }}>PDF Document</h3>
+                  <p style={{ color: "var(--text-sub)", marginBottom: "24px", fontSize: "14px" }}>
+                    Tap here to open and read the full CV.
+                  </p>
+                  <div className="btn-primary" style={{ padding: "10px 24px", pointerEvents: "none", fontSize: "14px" }}>
+                    Open Full CV
+                  </div>
+                </div>
+              ) : (
+                <object
+                  data={cv.fileUrl}
+                  type="application/pdf"
+                  style={{
+                    width: "100%",
+                    height: "90vh",
+                    border: "none",
+                    display: "block",
+                    background: "#fff"
+                  }}
+                >
+                  <p style={{ textAlign: "center", padding: "40px", color: "#555" }}>
+                    PDF preview not available in this browser.
+                    <br/>
+                    <a href={cv.fileUrl} target="_blank" rel="noreferrer" style={{ color: "#0070f3" }}>Open PDF directly</a>
+                  </p>
+                </object>
+              )
             ) : isImage ? (
               <img
                 src={cv.fileUrl}
