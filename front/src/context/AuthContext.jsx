@@ -4,11 +4,7 @@ const AuthContext = createContext();
 
 let rawApiUrl = import.meta.env.VITE_API_URL;
 if (!rawApiUrl) {
-  if (typeof window !== "undefined" && window.location.hostname.includes("vercel.app")) {
-    rawApiUrl = ""; // Use relative /api endpoint on Vercel deployment
-  } else {
-    rawApiUrl = "https://portfolio-backend-4t3v.onrender.com";
-  }
+  rawApiUrl = "https://portifolio-backend-4t3v.onrender.com";
 }
 if (typeof window !== "undefined" && window.location.protocol === "https:" && rawApiUrl.startsWith("http://")) {
   rawApiUrl = rawApiUrl.replace("http://", "https://");
