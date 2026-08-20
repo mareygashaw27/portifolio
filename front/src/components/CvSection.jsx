@@ -66,7 +66,13 @@ export default function CvSection() {
 
 
 
-  const isPdf = cv && (cv.fileType?.includes('pdf') || cv.fileUrl?.startsWith('data:application/pdf') || cv.fileName?.toLowerCase().endsWith('.pdf'));
+  const isPdf = cv && (
+    cv.fileType?.includes('pdf') ||
+    cv.fileUrl?.startsWith('data:application/pdf') ||
+    cv.fileName?.toLowerCase().endsWith('.pdf') ||
+    cv.fileUrl?.toLowerCase().includes('.pdf') ||
+    (cv.fileUrl && !cv.fileUrl?.startsWith('data:image'))
+  );
   const isImage = cv && (cv.fileType?.startsWith('image') || cv.fileUrl?.startsWith('data:image'));
 
   return (
@@ -133,9 +139,9 @@ export default function CvSection() {
             onClick={() => setCvFullscreen(true)}
           >
             {isPdf ? (
-              <iframe
-                src={`https://docs.google.com/viewer?url=${encodeURIComponent(cv.fileUrl)}&embedded=true`}
-                title={cv.fileName}
+              <object
+                data={cv.fileUrl}
+                type="application/pdf"
                 style={{
                   width: "100%",
                   height: "90vh",
@@ -144,7 +150,13 @@ export default function CvSection() {
                   background: "#fff",
                   pointerEvents: "none"
                 }}
-              />
+              >
+                <p style={{ textAlign: "center", padding: "40px", color: "#555" }}>
+                  PDF preview not available in this browser.
+                  <br/>
+                  <a href={cv.fileUrl} target="_blank" rel="noreferrer" style={{ color: "#0070f3" }}>Open PDF directly</a>
+                </p>
+              </object>
             ) : isImage ? (
               <img
                 src={cv.fileUrl}
@@ -238,11 +250,15 @@ export default function CvSection() {
                 }}
               >
                 {isPdf ? (
-                  <iframe
-                    src={`https://docs.google.com/viewer?url=${encodeURIComponent(cv.fileUrl)}&embedded=true`}
-                    title={cv.fileName}
+                  <object
+                    data={cv.fileUrl}
+                    type="application/pdf"
                     style={{ width: "100%", height: "85vh", border: "none" }}
-                  />
+                  >
+                    <p style={{ textAlign: "center", padding: "40px", color: "#555" }}>
+                      <a href={cv.fileUrl} target="_blank" rel="noreferrer" style={{ color: "#0070f3", fontWeight: "bold" }}>📄 Open PDF in new tab</a>
+                    </p>
+                  </object>
                 ) : isImage ? (
                   <img
                     src={cv.fileUrl}

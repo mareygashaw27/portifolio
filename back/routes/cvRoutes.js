@@ -21,7 +21,9 @@ router.post("/", authMiddleware, async (req, res) => {
 
     // Upload CV PDF to Cloudinary if base64
     if (data.fileUrl && data.fileUrl.startsWith("data:")) {
-      data.fileUrl = await uploadToCloudinary(data.fileUrl, "portfolio/cv", "auto");
+      // Use 'raw' for PDFs/docs so Cloudinary returns a proper public URL
+      const resourceType = data.fileUrl.startsWith("data:image") ? "image" : "raw";
+      data.fileUrl = await uploadToCloudinary(data.fileUrl, "portfolio/cv", resourceType);
     }
 
     // Delete all previous CVs (keep only the latest)
