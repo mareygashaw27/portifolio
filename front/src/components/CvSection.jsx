@@ -120,37 +120,28 @@ export default function CvSection() {
             </button>
           </div>
 
-          {/* CV Viewer — click to open PDF directly */}
+          {/* CV Viewer */}
           <div
             style={{
               borderRadius: "16px",
               overflow: "hidden",
               background: "rgba(11, 16, 30, 0.7)",
-              cursor: "pointer"
+              position: "relative"
             }}
-            onClick={() => window.open(cv.fileUrl, "_blank")}
           >
             {isPdf ? (
-              <div style={{
-                width: "100%",
-                padding: "60px 20px",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "linear-gradient(135deg, #1e2029 0%, #0b0c10 100%)",
-                border: "1px solid rgba(255, 255, 255, 0.05)",
-                textAlign: "center"
-              }}>
-                <span style={{ fontSize: "60px", marginBottom: "16px" }}>📄</span>
-                <h3 style={{ fontSize: "20px", fontWeight: "700", marginBottom: "8px", color: "#fff" }}>PDF Document</h3>
-                <p style={{ color: "var(--text-sub)", marginBottom: "24px", fontSize: "14px" }}>
-                  Tap here to open and read the full CV.
-                </p>
-                <div className="btn-primary" style={{ padding: "10px 24px", pointerEvents: "none", fontSize: "14px" }}>
-                  Open Full CV
-                </div>
-              </div>
+              <iframe
+                src={`https://docs.google.com/gview?url=${encodeURIComponent(cv.fileUrl)}&embedded=true`}
+                style={{
+                  width: "100%",
+                  height: "80vh",
+                  minHeight: "500px",
+                  border: "none",
+                  display: "block",
+                  background: "#fff"
+                }}
+                title="CV PDF Viewer"
+              />
             ) : isImage ? (
               <img
                 src={cv.fileUrl}
