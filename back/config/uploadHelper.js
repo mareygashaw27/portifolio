@@ -14,10 +14,18 @@ async function uploadToCloudinary(base64Data, folder, resourceType = "auto") {
   if (!base64Data || !base64Data.startsWith("data:")) return base64Data;
 
   try {
-    const result = await cloudinary.uploader.upload(base64Data, {
+    const options = {
       folder: folder,
       resource_type: resourceType,
-    });
+    };
+    
+    // Explicitly handle PDFs to ensure they get the .pdf extension
+    if (base64Data.startsWith("data:application/pdf")) {
+      options.resource_type = "image"; // Cloudinary handles PDFs best as 'image'
+      options.format = "pdf";
+    }
+
+    const result = await cloudinary.uploader.upload(base64Data, options);
     return result.secure_url;
   } catch (err) {
     console.error("Cloudinary upload error:", err.message);
