@@ -21,8 +21,8 @@ router.post("/", authMiddleware, async (req, res) => {
 
     // Upload CV PDF to Cloudinary if base64
     if (data.fileUrl && data.fileUrl.startsWith("data:")) {
-      // Use 'raw' for PDFs/docs so Cloudinary returns a proper public URL
-      const resourceType = data.fileUrl.startsWith("data:image") ? "image" : "raw";
+      // Cloudinary treats PDFs best when uploaded as 'image' or 'auto' (this preserves the .pdf extension and application/pdf mime type)
+      const resourceType = "auto";
       data.fileUrl = await uploadToCloudinary(data.fileUrl, "portfolio/cv", resourceType);
     }
 
