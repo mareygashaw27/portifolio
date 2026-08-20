@@ -17,15 +17,14 @@ export function AuthProvider({ children }) {
   const [isLocalToken, setIsLocalToken] = useState(false); // true when backend is unreachable
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
-  // Initialize auth state from localStorage
+  // Initialize auth state from sessionStorage (starts locked every new session/run)
   useEffect(() => {
     try {
-      const savedToken = localStorage.getItem("portfolio_admin_token");
-      const savedUser = localStorage.getItem("portfolio_admin_user");
+      const savedToken = sessionStorage.getItem("portfolio_admin_token");
+      const savedUser = sessionStorage.getItem("portfolio_admin_user");
       if (savedToken && savedUser) {
         setToken(savedToken);
         setUser(JSON.parse(savedUser));
-        // Detect if this is a local fallback token
         if (savedToken.startsWith("local_admin_")) {
           setIsLocalToken(true);
         }
@@ -56,8 +55,8 @@ export function AuthProvider({ children }) {
           setToken(data.token);
           setUser(data.user);
           setIsLocalToken(false); // Real JWT from backend
-          localStorage.setItem("portfolio_admin_token", data.token);
-          localStorage.setItem("portfolio_admin_user", JSON.stringify(data.user));
+          sessionStorage.setItem("portfolio_admin_token", data.token);
+          sessionStorage.setItem("portfolio_admin_user", JSON.stringify(data.user));
           return { success: true, message: data.message || "Login successful!" };
         }
       }
@@ -67,14 +66,13 @@ export function AuthProvider({ children }) {
 
     // 2. Client fallback matching for credentials 'mar' / '4225'
     if (trimmedUser === "mar" && trimmedPass === "4225") {
-      // Create local session token (offline mode — uploads won't persist to cloud)
       const fallbackToken = "local_admin_" + btoa(JSON.stringify({ username: "mar", timestamp: Date.now() }));
       const adminUser = { username: "mar", role: "admin" };
       setToken(fallbackToken);
       setUser(adminUser);
-      setIsLocalToken(true); // Flag: backend unreachable
-      localStorage.setItem("portfolio_admin_token", fallbackToken);
-      localStorage.setItem("portfolio_admin_user", JSON.stringify(adminUser));
+      setIsLocalToken(true);
+      sessionStorage.setItem("portfolio_admin_token", fallbackToken);
+      sessionStorage.setItem("portfolio_admin_user", JSON.stringify(adminUser));
       return { 
         success: true, 
         message: "Login successful! ⚠️ Backend server is starting up — uploads will retry automatically.",
@@ -93,6 +91,8 @@ export function AuthProvider({ children }) {
     setToken(null);
     setUser(null);
     setIsLocalToken(false);
+    sessionStorage.removeItem("portfolio_admin_token");
+    sessionStorage.removeItem("portfolio_admin_user");
     localStorage.removeItem("portfolio_admin_token");
     localStorage.removeItem("portfolio_admin_user");
   };

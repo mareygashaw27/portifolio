@@ -1,6 +1,6 @@
 {
   "name": "portfolio-root",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Root package.json for Vercel deployment of portfolio backend serverless functions",
   "main": "api/index.js",
   "dependencies": {

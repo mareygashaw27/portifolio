@@ -5,7 +5,6 @@ export default function CertificatesSection() {
   const { API_BASE_URL } = useAuth();
   const [certificates, setCertificates] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCert, setSelectedCert] = useState(null);
 
   const API_URL = `${API_BASE_URL}/api/certificates`;
 
@@ -36,14 +35,48 @@ export default function CertificatesSection() {
     fetchCertificates();
   }, []);
 
-  // Close modal on Escape key
-  useEffect(() => {
-    const handleKey = (e) => {
-      if (e.key === 'Escape') setSelectedCert(null);
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, []);
+  // Open certificate in a new full page/tab
+  const openCertificatePage = (cert) => {
+    if (!cert.imageUrl) return;
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${cert.title} — Certificate</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #070b14; min-height: 100vh; display: flex; flex-direction: column; align-items: center; font-family: -apple-system, sans-serif; color: #f3f4f6; }
+    .header { width: 100%; padding: 16px 20px; background: rgba(6,19,37,0.97); border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: space-between; gap: 12px; position: sticky; top: 0; z-index: 100; flex-wrap: wrap; }
+    .back-btn { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); color: #94a3b8; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; }
+    .title-wrap h2 { font-size: 16px; font-weight: 700; color: #fff; }
+    .title-wrap p { font-size: 13px; color: #ff6b35; font-weight: 600; margin-top: 2px; }
+    .badge { display: inline-flex; align-items: center; gap: 5px; padding: 6px 14px; border-radius: 20px; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.35); font-size: 13px; font-weight: 600; color: #10b981; }
+    .cert-container { flex: 1; width: 100%; display: flex; align-items: flex-start; justify-content: center; padding: 28px 16px; }
+    .cert-frame { max-width: 860px; width: 100%; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,0.6); }
+    .cert-frame img { width: 100%; display: block; object-fit: contain; }
+    .dl-btn { display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg,#ff6b35,#ff8c55); border: none; color: #fff; padding: 9px 18px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 700; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <button class="back-btn" onclick="window.close()">← Close</button>
+    <div class="title-wrap"><h2>${cert.title}</h2><p>${cert.issuer}</p></div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <a class="dl-btn" href="${cert.imageUrl}" download="${cert.title}.jpg">⬇ Download</a>
+      <span class="badge">✓ Verified</span>
+    </div>
+  </div>
+  <div class="cert-container">
+    <div class="cert-frame"><img src="${cert.imageUrl}" alt="${cert.title}" /></div>
+  </div>
+</body>
+</html>`;
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const win = window.open(url, '_blank');
+    if (win) setTimeout(() => URL.revokeObjectURL(url), 60000);
+  };
 
   return (
     <section id="certificates" style={{ marginBottom: "80px" }}>
@@ -83,7 +116,7 @@ export default function CertificatesSection() {
             <div
               key={cert._id}
               className="glass-card cert-card"
-              onClick={() => cert.imageUrl && setSelectedCert(cert)}
+              onClick={() => openCertificatePage(cert)}
               style={{
                 padding: "clamp(16px, 4vw, 28px)",
                 position: "relative",
@@ -134,7 +167,9 @@ export default function CertificatesSection() {
                         display: "block"
                       }}
                     />
-
+                    <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0)", display: "flex", alignItems: "center", justifyContent: "center" }} className="cert-img-overlay">
+                      <span className="cert-view-label" style={{ background: "rgba(255,107,53,0.9)", color: "#fff", fontSize: "12px", fontWeight: "700", padding: "5px 12px", borderRadius: "20px", opacity: 0, transition: "opacity 0.2s" }}>🔍 View Full</span>
+                    </div>
                   </div>
                 )}
 
@@ -179,131 +214,24 @@ export default function CertificatesSection() {
                 }}>
                   Verified Certificate
                 </div>
+                {cert.imageUrl && (
+                  <div style={{ marginTop: "8px", fontSize: "12px", color: "#6e829f", display: "flex", alignItems: "center", gap: "4px" }}>
+                    🔗 Tap to view full certificate
+                  </div>
+                )}
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* ===== LIGHTBOX MODAL ===== */}
-      {selectedCert && (
-        <div
-          onClick={() => setSelectedCert(null)}
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 9999,
-            background: "rgba(0, 0, 0, 0.88)",
-            backdropFilter: "blur(10px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "20px",
-            animation: "certFadeIn 0.2s ease"
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              position: "relative",
-              maxWidth: "900px",
-              width: "100%",
-              background: "rgba(15, 20, 40, 0.97)",
-              borderRadius: "20px",
-              border: "1px solid rgba(168, 85, 247, 0.3)",
-              boxShadow: "0 30px 80px rgba(0,0,0,0.6)",
-              overflow: "hidden",
-              animation: "certSlideUp 0.25s ease"
-            }}
-          >
-            {/* Close button */}
-            <button
-              onClick={() => setSelectedCert(null)}
-              style={{
-                position: "absolute",
-                top: "14px",
-                right: "14px",
-                zIndex: 10,
-                background: "rgba(0,0,0,0.5)",
-                border: "1px solid rgba(255,255,255,0.2)",
-                borderRadius: "50%",
-                width: "36px",
-                height: "36px",
-                cursor: "pointer",
-                color: "#fff",
-                fontSize: "18px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                lineHeight: 1,
-                transition: "background 0.2s"
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.15)"}
-              onMouseLeave={(e) => e.currentTarget.style.background = "rgba(0,0,0,0.5)"}
-            >
-              ✕
-            </button>
 
-            {/* Certificate Image - Full size */}
-            <div style={{ background: "#fff", lineHeight: 0 }}>
-              <img
-                src={selectedCert.imageUrl}
-                alt={selectedCert.title}
-                style={{
-                  width: "100%",
-                  maxHeight: "70vh",
-                  objectFit: "contain",
-                  display: "block"
-                }}
-              />
-            </div>
-
-            {/* Info bar */}
-            <div style={{
-              padding: "20px 24px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-              gap: "12px"
-            }}>
-              <div>
-                <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#fff", margin: "0 0 4px" }}>
-                  {selectedCert.title}
-                </h3>
-                <span style={{ fontSize: "14px", color: "var(--primary)", fontWeight: "600" }}>
-                  {selectedCert.issuer}
-                </span>
-              </div>
-              <div style={{
-                display: "inline-flex",
-                alignItems: "center",
-                padding: "6px 14px",
-                borderRadius: "20px",
-                background: "rgba(16, 185, 129, 0.12)",
-                border: "1px solid rgba(16, 185, 129, 0.35)",
-                fontSize: "13px",
-                fontWeight: "600",
-                color: "#10b981"
-              }}>
-                ✓ Verified Certificate
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       <style>{`
-        @keyframes certFadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes certSlideUp {
-          from { opacity: 0; transform: translateY(30px) scale(0.97); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
-        }
         .cert-card:hover .cert-img-overlay {
           background: rgba(0,0,0,0.45) !important;
+        }
+        .cert-card:hover .cert-view-label {
           opacity: 1 !important;
         }
       `}</style>

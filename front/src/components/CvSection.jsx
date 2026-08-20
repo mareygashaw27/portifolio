@@ -128,7 +128,7 @@ export default function CvSection() {
             </button>
           </div>
 
-          {/* CV Viewer — click to open fullscreen */}
+          {/* CV Viewer — click to open PDF directly */}
           <div
             style={{
               borderRadius: "16px",
@@ -136,7 +136,7 @@ export default function CvSection() {
               background: "rgba(11, 16, 30, 0.7)",
               cursor: "pointer"
             }}
-            onClick={() => setCvFullscreen(true)}
+            onClick={() => window.open(cv.fileUrl, "_blank")}
           >
             {isPdf ? (
               <object

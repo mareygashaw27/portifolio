@@ -6,7 +6,8 @@ import EditCertificateModal from './EditCertificateModal';
 
 export default function AdminDashboard({ onExitDashboard }) {
   const { logout, getAuthHeaders, API_BASE_URL, isLocalToken, refreshAuth } = useAuth();
-  const [activeTab, setActiveTab] = useState('projects'); // 'profile', 'projects', 'certificates', 'cv', 'videos'
+  const [activeTab, setActiveTab] = useState('projects');
+  const [sidebarOpen, setSidebarOpen] = useState(false); // mobile sidebar toggle
 
   const getFullUrl = (url) => {
     if (!url) return '';
@@ -479,22 +480,76 @@ export default function AdminDashboard({ onExitDashboard }) {
   };
 
   return (
-    <div style={{
-      display: 'flex',
-      minHeight: '100vh',
-      background: '#070b14',
-      color: '#f3f4f6'
-    }}>
-      {/* LEFT SIDEBAR */}
-      <aside style={{
-        width: '280px',
-        background: '#061325',
-        borderRight: '1px solid rgba(255, 255, 255, 0.08)',
+    <div
+      className={sidebarOpen ? 'admin-sidebar-open' : ''}
+      style={{
         display: 'flex',
-        flexDirection: 'column',
-        padding: '30px 18px',
-        flexShrink: 0
+        minHeight: '100vh',
+        background: '#070b14',
+        color: '#f3f4f6',
+        position: 'relative',
+        overflow: 'hidden'
       }}>
+      {/* Mobile top bar */}
+      <div style={{
+        display: 'none',
+        position: 'fixed',
+        top: 0, left: 0, right: 0,
+        zIndex: 200,
+        background: '#061325',
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
+        padding: '14px 18px',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }} className="admin-mobile-bar">
+        <h2 style={{ fontSize: '18px', fontWeight: '800', color: '#fff', margin: 0 }}>
+          Admin <span style={{ color: '#ff6b35' }}>Panel</span>
+        </h2>
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          style={{
+            background: sidebarOpen ? 'rgba(255,107,53,0.15)' : 'rgba(255,255,255,0.07)',
+            border: '1px solid rgba(255,255,255,0.12)',
+            borderRadius: '8px',
+            width: '40px', height: '40px',
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center', gap: '5px',
+            cursor: 'pointer'
+          }}
+        >
+          <span style={{ width: '18px', height: '2px', background: sidebarOpen ? '#ff6b35' : '#94a3b8', borderRadius: '2px', transition: 'all 0.2s' }} />
+          <span style={{ width: '18px', height: '2px', background: sidebarOpen ? '#ff6b35' : '#94a3b8', borderRadius: '2px', transition: 'all 0.2s' }} />
+          <span style={{ width: '18px', height: '2px', background: sidebarOpen ? '#ff6b35' : '#94a3b8', borderRadius: '2px', transition: 'all 0.2s' }} />
+        </button>
+      </div>
+
+      {/* Overlay for mobile when sidebar open */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          style={{
+            display: 'none',
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.6)',
+            zIndex: 149,
+            backdropFilter: 'blur(3px)'
+          }}
+          className="admin-overlay"
+        />
+      )}
+      {/* LEFT SIDEBAR */}
+      <aside
+        className="admin-sidebar"
+        style={{
+          width: '280px',
+          background: '#061325',
+          borderRight: '1px solid rgba(255, 255, 255, 0.08)',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '30px 18px',
+          flexShrink: 0
+        }}
+      >
         {/* Brand Header */}
         <div style={{ marginBottom: '36px', paddingLeft: '12px' }}>
           <h1 style={{
@@ -525,7 +580,10 @@ export default function AdminDashboard({ onExitDashboard }) {
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  setSidebarOpen(false); // close sidebar on mobile after selection
+                }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -604,7 +662,7 @@ export default function AdminDashboard({ onExitDashboard }) {
       </aside>
 
       {/* RIGHT MAIN CONTENT AREA */}
-      <main style={{ flex: 1, padding: '40px', overflowY: 'auto' }}>
+      <main className="admin-main" style={{ flex: 1, padding: '40px', overflowY: 'auto' }}>
       {/* OFFLINE MODE BANNER */}
       {isLocalToken && (
         <div style={{
