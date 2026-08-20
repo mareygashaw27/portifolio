@@ -6,6 +6,8 @@ export default function CvSection() {
   const [cv, setCv] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(typeof window !== "undefined" && window.innerWidth <= 768);
+  const [blobUrl, setBlobUrl] = useState(null);
+  const [cvFullscreen, setCvFullscreen] = useState(false);
 
   const API_URL = `${API_BASE_URL}/api/cv`;
 
@@ -42,9 +44,15 @@ export default function CvSection() {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     
+    const handleKey = (e) => {
+      if (e.key === 'Escape') setCvFullscreen(false);
+    };
+    window.addEventListener('keydown', handleKey);
+    
     return () => {
       window.removeEventListener('cvUpdated', handleCvUpdated);
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('keydown', handleKey);
     };
   }, []);
 
@@ -72,6 +80,30 @@ export default function CvSection() {
     cv.fileUrl?.toLowerCase().includes('.pdf') ||
     (cv.fileUrl && !cv.fileUrl?.startsWith('data:image'))
   );
+  
+  useEffect(() => {
+    if (cv && cv.fileUrl && isPdf) {
+      if (cv.fileUrl.startsWith('blob:')) {
+        setBlobUrl(cv.fileUrl);
+        return;
+      }
+      // Fetch the file and create a local Blob URL to force application/pdf MIME type
+      // This prevents the browser from forcing a download due to missing .pdf extensions from the backend
+      fetch(cv.fileUrl)
+        .then(res => res.blob())
+        .then(blob => {
+          const fileBlob = new Blob([blob], { type: 'application/pdf' });
+          setBlobUrl(URL.createObjectURL(fileBlob));
+        })
+        .catch(err => {
+          console.error("Error creating Blob URL for CV", err);
+          setBlobUrl(cv.fileUrl); // fallback
+        });
+    } else {
+      setBlobUrl(null);
+    }
+  }, [cv, isPdf]);
+
   const isImage = cv && (cv.fileType?.startsWith('image') || cv.fileUrl?.startsWith('data:image'));
 
   return (
@@ -106,26 +138,7 @@ export default function CvSection() {
       {!loading && cv && (
         <div style={{ maxWidth: "900px", margin: "0 auto" }}>
 
-          {/* Download bar — above the CV viewer */}
-          <div style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            marginBottom: "10px"
-          }}>
-            <button
-              className="btn-primary"
-              onClick={handleCvDownload}
-              style={{
-                fontSize: "13.5px",
-                padding: "9px 22px",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px"
-              }}
-            >
-              📥 Download CV
-            </button>
-          </div>
+          {/* Download bar removed as requested */}
 
           {/* CV Viewer */}
           <div
@@ -139,7 +152,7 @@ export default function CvSection() {
             {isPdf ? (
               isMobile ? (
                 <div 
-                  onClick={() => window.open(cv.fileUrl, "_blank")}
+                  onClick={() => setCvFullscreen(true)}
                   style={{
                     width: "100%",
                     padding: "60px 20px",
@@ -159,27 +172,33 @@ export default function CvSection() {
                     Tap here to open and read the full CV.
                   </p>
                   <div className="btn-primary" style={{ padding: "10px 24px", pointerEvents: "none", fontSize: "14px" }}>
-                    Open Full CV
+                    {blobUrl ? "Open Full CV" : "Loading PDF..."}
                   </div>
                 </div>
               ) : (
-                <object
-                  data={cv.fileUrl}
-                  type="application/pdf"
-                  style={{
-                    width: "100%",
-                    height: "90vh",
-                    border: "none",
-                    display: "block",
-                    background: "#fff"
-                  }}
+                <div 
+                  onClick={() => setCvFullscreen(true)}
+                  style={{ cursor: "pointer" }}
                 >
-                  <p style={{ textAlign: "center", padding: "40px", color: "#555" }}>
-                    PDF preview not available in this browser.
-                    <br/>
-                    <a href={cv.fileUrl} target="_blank" rel="noreferrer" style={{ color: "#0070f3" }}>Open PDF directly</a>
-                  </p>
-                </object>
+                  <object
+                    data={blobUrl || cv.fileUrl}
+                    type="application/pdf"
+                    style={{
+                      width: "100%",
+                      height: "90vh",
+                      border: "none",
+                      display: "block",
+                      background: "#fff",
+                      pointerEvents: "none"
+                    }}
+                  >
+                    <p style={{ textAlign: "center", padding: "40px", color: "#555" }}>
+                      PDF preview not available in this browser.
+                      <br/>
+                      <span style={{ color: "#0070f3", textDecoration: "underline" }}>Click to open PDF</span>
+                    </p>
+                  </object>
+                </div>
               )
             ) : isImage ? (
               <img
@@ -191,12 +210,13 @@ export default function CvSection() {
                   display: "block",
                   pointerEvents: "none"
                 }}
+                onClick={() => setCvFullscreen(true)}
               />
             ) : (
-              <div style={{ textAlign: "center", padding: "40px", color: "var(--text-sub)" }}>
+              <div style={{ textAlign: "center", padding: "40px", color: "var(--text-sub)" }} onClick={() => setCvFullscreen(true)}>
                 <p style={{ marginBottom: "16px" }}>Preview not available for this file type.</p>
-                <button className="btn-primary" onClick={(e) => { e.stopPropagation(); handleCvDownload(); }}>
-                  Download CV
+                <button className="btn-primary">
+                  View CV
                 </button>
               </div>
             )}
