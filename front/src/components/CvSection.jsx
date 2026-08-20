@@ -134,7 +134,7 @@ export default function CvSection() {
           >
             {isPdf ? (
               <iframe
-                src={`${cv.fileUrl}#toolbar=0`}
+                src={`https://docs.google.com/viewer?url=${encodeURIComponent(cv.fileUrl)}&embedded=true`}
                 title={cv.fileName}
                 style={{
                   width: "100%",
@@ -239,7 +239,7 @@ export default function CvSection() {
               >
                 {isPdf ? (
                   <iframe
-                    src={`${cv.fileUrl}#toolbar=0`}
+                    src={`https://docs.google.com/viewer?url=${encodeURIComponent(cv.fileUrl)}&embedded=true`}
                     title={cv.fileName}
                     style={{ width: "100%", height: "85vh", border: "none" }}
                   />
