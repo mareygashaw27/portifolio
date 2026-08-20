@@ -41,14 +41,6 @@ export default function CvSection() {
     return () => window.removeEventListener('cvUpdated', handleCvUpdated);
   }, []);
 
-  // Close fullscreen on Escape key
-  useEffect(() => {
-    const handleKey = (e) => {
-      if (e.key === 'Escape') setCvFullscreen(false);
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, []);
 
   const handleCvDownload = () => {
     if (!cv || !cv.fileUrl) {
@@ -139,24 +131,26 @@ export default function CvSection() {
             onClick={() => window.open(cv.fileUrl, "_blank")}
           >
             {isPdf ? (
-              <object
-                data={cv.fileUrl}
-                type="application/pdf"
-                style={{
-                  width: "100%",
-                  height: "90vh",
-                  border: "none",
-                  display: "block",
-                  background: "#fff",
-                  pointerEvents: "none"
-                }}
-              >
-                <p style={{ textAlign: "center", padding: "40px", color: "#555" }}>
-                  PDF preview not available in this browser.
-                  <br/>
-                  <a href={cv.fileUrl} target="_blank" rel="noreferrer" style={{ color: "#0070f3" }}>Open PDF directly</a>
+              <div style={{
+                width: "100%",
+                padding: "60px 20px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "linear-gradient(135deg, #1e2029 0%, #0b0c10 100%)",
+                border: "1px solid rgba(255, 255, 255, 0.05)",
+                textAlign: "center"
+              }}>
+                <span style={{ fontSize: "60px", marginBottom: "16px" }}>📄</span>
+                <h3 style={{ fontSize: "20px", fontWeight: "700", marginBottom: "8px", color: "#fff" }}>PDF Document</h3>
+                <p style={{ color: "var(--text-sub)", marginBottom: "24px", fontSize: "14px" }}>
+                  Tap here to open and read the full CV.
                 </p>
-              </object>
+                <div className="btn-primary" style={{ padding: "10px 24px", pointerEvents: "none", fontSize: "14px" }}>
+                  Open Full CV
+                </div>
+              </div>
             ) : isImage ? (
               <img
                 src={cv.fileUrl}
@@ -178,106 +172,10 @@ export default function CvSection() {
             )}
           </div>
 
-
-          {/* ===== FULLSCREEN MODAL ===== */}
-          {cvFullscreen && (
-            <div
-              onClick={() => setCvFullscreen(false)}
-              style={{
-                position: "fixed",
-                inset: 0,
-                zIndex: 9999,
-                background: "rgba(0,0,0,0.92)",
-                backdropFilter: "blur(12px)",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "20px",
-                animation: "cvFadeIn 0.2s ease"
-              }}
-            >
-              {/* Top bar — download + close only */}
-              <div
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                  width: "100%",
-                  maxWidth: "960px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "flex-end",
-                  gap: "10px",
-                  marginBottom: "12px"
-                }}
-              >
-                <button
-                  className="btn-primary"
-                  onClick={handleCvDownload}
-                  style={{ fontSize: "13px", padding: "8px 16px", display: "inline-flex", alignItems: "center", gap: "6px" }}
-                >
-                  📥 Download CV
-                </button>
-                <button
-                  onClick={() => setCvFullscreen(false)}
-                  style={{
-                    background: "rgba(255,255,255,0.1)",
-                    border: "1px solid rgba(255,255,255,0.2)",
-                    borderRadius: "50%",
-                    width: "36px",
-                    height: "36px",
-                    cursor: "pointer",
-                    color: "#fff",
-                    fontSize: "18px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center"
-                  }}
-                >
-                  ✕
-                </button>
-              </div>
-
-              {/* CV Content */}
-              <div
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                  width: "100%",
-                  maxWidth: "960px",
-                  flex: 1,
-                  borderRadius: "16px",
-                  overflow: "hidden",
-                  background: "#fff"
-                }}
-              >
-                {isPdf ? (
-                  <object
-                    data={cv.fileUrl}
-                    type="application/pdf"
-                    style={{ width: "100%", height: "85vh", border: "none" }}
-                  >
-                    <p style={{ textAlign: "center", padding: "40px", color: "#555" }}>
-                      <a href={cv.fileUrl} target="_blank" rel="noreferrer" style={{ color: "#0070f3", fontWeight: "bold" }}>📄 Open PDF in new tab</a>
-                    </p>
-                  </object>
-                ) : isImage ? (
-                  <img
-                    src={cv.fileUrl}
-                    alt={cv.fileName}
-                    style={{ width: "100%", height: "85vh", objectFit: "contain", display: "block" }}
-                  />
-                ) : null}
-              </div>
-            </div>
-          )}
-
-          <style>{`
-            @keyframes cvFadeIn {
-              from { opacity: 0; }
-              to { opacity: 1; }
-            }
-          `}</style>
+          </div>
         </div>
       )}
+
     </section>
   );
 }

@@ -663,27 +663,7 @@ export default function AdminDashboard({ onExitDashboard }) {
 
       {/* RIGHT MAIN CONTENT AREA */}
       <main className="admin-main" style={{ flex: 1, padding: '40px', overflowY: 'auto' }}>
-      {/* OFFLINE MODE BANNER */}
-      {isLocalToken && (
-        <div style={{
-          background: 'rgba(234, 179, 8, 0.15)',
-          border: '1px solid rgba(234, 179, 8, 0.4)',
-          borderRadius: '10px',
-          padding: '12px 18px',
-          marginBottom: '24px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px'
-        }}>
-          <span style={{ fontSize: '20px' }}>⚠️</span>
-          <div>
-            <strong style={{ color: '#fbbf24', fontSize: '14px' }}>Backend is starting up (Render cold start)</strong>
-            <p style={{ color: '#fde68a', fontSize: '12px', margin: '2px 0 0 0' }}>
-              Uploads will be blocked until the server is ready. This usually takes 30–60 seconds. Wait a moment then try uploading again.
-            </p>
-          </div>
-        </div>
-      )}
+
 
         {/* TAB 1: PROFILE INFO */}
         {activeTab === 'profile' && (
