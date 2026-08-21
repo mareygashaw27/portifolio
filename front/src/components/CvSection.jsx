@@ -177,7 +177,7 @@ export default function CvSection() {
 
             {isPdf ? (
               <iframe
-                src={secureUrl?.startsWith('data:') ? secureUrl : `${API_URL}/file`}
+                src={secureUrl?.startsWith('data:') ? secureUrl : `https://docs.google.com/gview?url=${encodeURIComponent(secureUrl)}&embedded=true`}
                 style={{
                   width: "100%",
                   height: "85vh",
