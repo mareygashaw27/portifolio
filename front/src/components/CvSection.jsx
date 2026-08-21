@@ -7,7 +7,6 @@ export default function CvSection() {
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(typeof window !== "undefined" && window.innerWidth <= 768);
   const [blobUrl, setBlobUrl] = useState(null);
-  const [cvFullscreen, setCvFullscreen] = useState(false);
 
   const API_URL = `${API_BASE_URL}/api/cv`;
 
@@ -44,33 +43,11 @@ export default function CvSection() {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     
-    const handleKey = (e) => {
-      if (e.key === 'Escape') setCvFullscreen(false);
-    };
-    window.addEventListener('keydown', handleKey);
-    
     return () => {
       window.removeEventListener('cvUpdated', handleCvUpdated);
       window.removeEventListener('resize', handleResize);
-      window.removeEventListener('keydown', handleKey);
     };
   }, []);
-
-
-  const handleCvDownload = () => {
-    if (!cv || !cv.fileUrl) {
-      alert("No CV is currently available for download.");
-      return;
-    }
-
-    const link = document.createElement("a");
-    link.href = cv.fileUrl;
-    link.download = cv.fileName || "Marey_Gashaw_CV.pdf";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
 
 
   const isPdf = cv && (
@@ -152,7 +129,7 @@ export default function CvSection() {
             {isPdf ? (
               isMobile ? (
                 <div 
-                  onClick={() => setCvFullscreen(true)}
+                  onClick={() => window.open(blobUrl || cv.fileUrl, '_blank')}
                   style={{
                     width: "100%",
                     padding: "60px 20px",
@@ -177,7 +154,7 @@ export default function CvSection() {
                 </div>
               ) : (
                 <div 
-                  onClick={() => setCvFullscreen(true)}
+                  onClick={() => window.open(blobUrl || cv.fileUrl, '_blank')}
                   style={{ cursor: "pointer" }}
                 >
                   <object
@@ -210,10 +187,10 @@ export default function CvSection() {
                   display: "block",
                   pointerEvents: "none"
                 }}
-                onClick={() => setCvFullscreen(true)}
+                onClick={() => window.open(cv.fileUrl, '_blank')}
               />
             ) : (
-              <div style={{ textAlign: "center", padding: "40px", color: "var(--text-sub)" }} onClick={() => setCvFullscreen(true)}>
+              <div style={{ textAlign: "center", padding: "40px", color: "var(--text-sub)" }} onClick={() => window.open(cv.fileUrl, '_blank')}>
                 <p style={{ marginBottom: "16px" }}>Preview not available for this file type.</p>
                 <button className="btn-primary">
                   View CV
