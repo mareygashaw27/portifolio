@@ -93,8 +93,8 @@ export default function Navbar({ onOpenModal, onOpenLogin, onOpenAdminPanel, act
           </a>
         ))}
 
-        {/* Admin Controls */}
-        {isAdmin ? (
+        {/* Admin Controls (Only visible when logged in) */}
+        {isAdmin && (
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "10px" }}>
             <button
               onClick={onOpenAdminPanel}
@@ -133,21 +133,6 @@ export default function Navbar({ onOpenModal, onOpenLogin, onOpenAdminPanel, act
               Logout
             </button>
           </div>
-        ) : (
-          <button
-            onClick={onOpenLogin}
-            className="btn-secondary"
-            style={{
-              marginLeft: "8px",
-              fontSize: "13px",
-              padding: "7px 14px",
-              border: "1px solid rgba(97, 218, 255, 0.3)",
-              background: "rgba(97, 218, 255, 0.06)",
-              color: "var(--primary)"
-            }}
-          >
-            Admin Login
-          </button>
         )}
       </div>
 
@@ -209,7 +194,7 @@ export default function Navbar({ onOpenModal, onOpenLogin, onOpenAdminPanel, act
             </a>
           ))}
 
-          {isAdmin ? (
+          {isAdmin && (
             <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px" }}>
               <button
                 onClick={() => {
@@ -248,23 +233,6 @@ export default function Navbar({ onOpenModal, onOpenLogin, onOpenAdminPanel, act
                 Logout (Admin)
               </button>
             </div>
-          ) : (
-            <button
-              onClick={() => {
-                setMobileOpen(false);
-                onOpenLogin();
-              }}
-              className="btn-secondary"
-              style={{
-                marginTop: "8px",
-                fontSize: "14px",
-                justifyContent: "center",
-                border: "1px solid rgba(97, 218, 255, 0.3)",
-                color: "var(--primary)"
-              }}
-            >
-              Admin Login
-            </button>
           )}
         </div>
       )}
