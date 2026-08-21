@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { openCvFile as launchCv } from '../utils/cvHelper';
 
 export default function CvSection() {
   const { API_BASE_URL } = useAuth();
@@ -81,7 +82,7 @@ export default function CvSection() {
   }, [secureUrl]);
 
   const openCvFile = () => {
-    window.open(`${API_BASE_URL}/api/cv/file`, '_blank');
+    launchCv(cv || pdfBlobUrl || secureUrl, API_BASE_URL);
   };
 
   return (
@@ -138,35 +139,27 @@ export default function CvSection() {
               gap: "10px"
             }}>
               <div>
-                <h3 style={{ fontSize: "18px", fontWeight: "700", margin: "0 0 4px 0", color: "#fff" }}>
+                <h3 style={{ fontSize: "18px", fontWeight: "700", margin: 0, color: "#fff" }}>
                   📄 {cv.fileName || "Marey cv.pdf"}
                 </h3>
               </div>
-
-              <button
-                onClick={openCvFile}
-                className="btn-primary"
-                style={{
-                  padding: "8px 18px",
-                  fontSize: "13px",
-                  fontWeight: "700",
-                  cursor: "pointer"
-                }}
-              >
-                ↗ Open Full Screen
-              </button>
             </div>
 
             {/* Direct Document Display Box */}
-            <div style={{
-              width: "100%",
-              height: "75vh",
-              borderRadius: "12px",
-              overflow: "hidden",
-              background: "#161b22",
-              border: "1px solid var(--border-color)",
-              position: "relative"
-            }}>
+            <div
+              onClick={openCvFile}
+              title="Click to view CV"
+              style={{
+                width: "100%",
+                height: "75vh",
+                borderRadius: "12px",
+                overflow: "hidden",
+                background: "#161b22",
+                border: "1px solid var(--border-color)",
+                position: "relative",
+                cursor: "pointer"
+              }}
+            >
               {previewImageUrl ? (
                 <img
                   src={previewImageUrl}

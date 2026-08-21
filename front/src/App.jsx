@@ -131,7 +131,7 @@ function App() {
       <main style={{ flex: 1, maxWidth: "1200px", margin: "0 auto", padding: "40px 20px", width: "100%" }}>
         {activeSection === 'home' && (
           <div className="section-fade-in">
-            <Hero profile={profile} />
+            <Hero profile={profile} onNavigate={(sec) => setActiveSection(sec)} />
           </div>
         )}
         {activeSection === 'about' && (

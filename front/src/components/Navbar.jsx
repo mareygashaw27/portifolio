@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { openCvFile as launchCv } from '../utils/cvHelper';
 
 export default function Navbar({ onOpenModal, onOpenLogin, onOpenAdminPanel, activeSection, setActiveSection, profile = {} }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { isAdmin, logout } = useAuth();
+  const { isAdmin, logout, API_BASE_URL } = useAuth();
   const displayName = profile.name || 'Marey Gashaw';
   const photoUrl = profile.photoUrl || '/mar.jpg';
 
@@ -16,6 +17,14 @@ export default function Navbar({ onOpenModal, onOpenLogin, onOpenAdminPanel, act
     { id: "cv", label: "CV" },
     { id: "videos", label: "🎬 Videos" }
   ];
+
+  const handleNavClick = (e, linkId) => {
+    e.preventDefault();
+    setActiveSection(linkId);
+    if (linkId === 'cv') {
+      launchCv(null, API_BASE_URL);
+    }
+  };
 
   return (
     <nav style={{
@@ -67,13 +76,7 @@ export default function Navbar({ onOpenModal, onOpenLogin, onOpenAdminPanel, act
           <a
             key={index}
             href={`#${link.id}`}
-            onClick={(e) => {
-              e.preventDefault();
-              if (link.id === 'cv') {
-                window.open(`${API_BASE_URL}/api/cv/file`, '_blank');
-              }
-              setActiveSection(link.id);
-            }}
+            onClick={(e) => handleNavClick(e, link.id)}
             className={`nav-link ${activeSection === link.id ? 'active' : ''}`}
             style={{
               color: activeSection === link.id ? "var(--primary)" : "var(--text-sub)",
@@ -188,12 +191,8 @@ export default function Navbar({ onOpenModal, onOpenLogin, onOpenAdminPanel, act
               key={index}
               href={`#${link.id}`}
               onClick={(e) => {
-                e.preventDefault();
                 setMobileOpen(false);
-                if (link.id === 'cv') {
-                  window.open(`${API_BASE_URL}/api/cv/file`, '_blank');
-                }
-                setActiveSection(link.id);
+                handleNavClick(e, link.id);
               }}
               style={{
                 color: activeSection === link.id ? "var(--primary)" : "var(--text-sub)",

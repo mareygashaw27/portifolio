@@ -1,10 +1,16 @@
 import React from 'react';
+import { openCvFile as launchCv } from '../utils/cvHelper';
 
-export default function Hero({ onOpenModal, profile = {} }) {
+export default function Hero({ onNavigate, profile = {} }) {
   const name = profile.name || 'Marey Gashaw';
   const subtitle = profile.subtitle || 'Information Technology Student';
   const description = profile.description || 'Passionate about building modern web applications and exploring new technologies. Turning ideas into digital experiences.';
   const photoUrl = profile.photoUrl || '/mar.jpg';
+  const handleCvClick = () => {
+    launchCv();
+    if (onNavigate) onNavigate('cv');
+  };
+
   return (
     <section style={{
       display: "flex",
@@ -85,6 +91,40 @@ export default function Hero({ onOpenModal, profile = {} }) {
           }}>
             {description}
           </p>
+
+          {/* Action CTA Buttons */}
+          <div style={{ display: "flex", gap: "14px", flexWrap: "wrap" }}>
+            <button
+              onClick={handleCvClick}
+              className="btn-primary"
+              style={{
+                padding: "12px 24px",
+                fontSize: "15px",
+                fontWeight: "700",
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px"
+              }}
+            >
+              📄 View CV
+            </button>
+            <button
+              onClick={() => onNavigate && onNavigate('projects')}
+              className="btn-secondary"
+              style={{
+                padding: "12px 24px",
+                fontSize: "15px",
+                fontWeight: "600",
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px"
+              }}
+            >
+              📁 View Projects
+            </button>
+          </div>
 
         </div>
       </div>
