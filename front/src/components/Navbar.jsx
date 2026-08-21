@@ -76,6 +76,8 @@ export default function Navbar({ onOpenModal, onOpenLogin, onOpenAdminPanel, act
                     const parsed = JSON.parse(localCv);
                     if (parsed && parsed.fileUrl) {
                       let fileUrl = parsed.fileUrl.startsWith('http://') ? parsed.fileUrl.replace('http://', 'https://') : parsed.fileUrl;
+                      let targetUrl = fileUrl;
+
                       if (fileUrl.startsWith('data:')) {
                         const parts = fileUrl.split(';base64,');
                         const contentType = parts[0].replace('data:', '') || 'application/pdf';
@@ -86,9 +88,12 @@ export default function Navbar({ onOpenModal, onOpenLogin, onOpenAdminPanel, act
                         }
                         const byteArray = new Uint8Array(byteNumbers);
                         const blob = new Blob([byteArray], { type: contentType });
-                        fileUrl = URL.createObjectURL(blob);
+                        targetUrl = URL.createObjectURL(blob);
+                      } else if (fileUrl.includes('cloudinary.com') || fileUrl.toLowerCase().includes('.pdf')) {
+                        targetUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(fileUrl)}`;
                       }
-                      window.open(fileUrl, '_blank');
+
+                      window.open(targetUrl, '_blank');
                     }
                   } catch (err) {
                     console.error("Error opening CV link:", err);
@@ -220,6 +225,8 @@ export default function Navbar({ onOpenModal, onOpenLogin, onOpenAdminPanel, act
                       const parsed = JSON.parse(localCv);
                       if (parsed && parsed.fileUrl) {
                         let fileUrl = parsed.fileUrl.startsWith('http://') ? parsed.fileUrl.replace('http://', 'https://') : parsed.fileUrl;
+                        let targetUrl = fileUrl;
+
                         if (fileUrl.startsWith('data:')) {
                           const parts = fileUrl.split(';base64,');
                           const contentType = parts[0].replace('data:', '') || 'application/pdf';
@@ -230,9 +237,12 @@ export default function Navbar({ onOpenModal, onOpenLogin, onOpenAdminPanel, act
                           }
                           const byteArray = new Uint8Array(byteNumbers);
                           const blob = new Blob([byteArray], { type: contentType });
-                          fileUrl = URL.createObjectURL(blob);
+                          targetUrl = URL.createObjectURL(blob);
+                        } else if (fileUrl.includes('cloudinary.com') || fileUrl.toLowerCase().includes('.pdf')) {
+                          targetUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(fileUrl)}`;
                         }
-                        window.open(fileUrl, '_blank');
+
+                        window.open(targetUrl, '_blank');
                       }
                     } catch (err) {
                       console.error("Error opening CV link:", err);
