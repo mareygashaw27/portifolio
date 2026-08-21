@@ -7,6 +7,7 @@ export default function CvSection() {
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(typeof window !== "undefined" && window.innerWidth <= 768);
   const [blobUrl, setBlobUrl] = useState(null);
+  const [cvFullscreen, setCvFullscreen] = useState(false);
 
   const API_URL = `${API_BASE_URL}/api/cv`;
 
@@ -42,31 +43,41 @@ export default function CvSection() {
     
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
+
+    const handleKey = (e) => {
+      if (e.key === 'Escape') setCvFullscreen(false);
+    };
+    window.addEventListener('keydown', handleKey);
     
     return () => {
       window.removeEventListener('cvUpdated', handleCvUpdated);
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('keydown', handleKey);
     };
   }, []);
 
 
+  const secureUrl = cv && cv.fileUrl
+    ? (cv.fileUrl.startsWith('http://') ? cv.fileUrl.replace('http://', 'https://') : cv.fileUrl)
+    : null;
+
   const isPdf = cv && (
     cv.fileType?.includes('pdf') ||
-    cv.fileUrl?.startsWith('data:application/pdf') ||
+    secureUrl?.startsWith('data:application/pdf') ||
     cv.fileName?.toLowerCase().endsWith('.pdf') ||
-    cv.fileUrl?.toLowerCase().includes('.pdf') ||
-    (cv.fileUrl && !cv.fileUrl?.startsWith('data:image'))
+    secureUrl?.toLowerCase().includes('.pdf') ||
+    (secureUrl && !secureUrl?.startsWith('data:image'))
   );
   
   useEffect(() => {
-    if (cv && cv.fileUrl && isPdf) {
-      if (cv.fileUrl.startsWith('blob:')) {
-        setBlobUrl(cv.fileUrl);
+    if (cv && secureUrl && isPdf) {
+      if (secureUrl.startsWith('blob:')) {
+        setBlobUrl(secureUrl);
         return;
       }
       // Fetch the file and create a local Blob URL to force application/pdf MIME type
       // This prevents the browser from forcing a download due to missing .pdf extensions from the backend
-      fetch(cv.fileUrl)
+      fetch(secureUrl)
         .then(res => res.blob())
         .then(blob => {
           const fileBlob = new Blob([blob], { type: 'application/pdf' });
@@ -74,14 +85,14 @@ export default function CvSection() {
         })
         .catch(err => {
           console.error("Error creating Blob URL for CV", err);
-          setBlobUrl(cv.fileUrl); // fallback
+          setBlobUrl(secureUrl); // fallback
         });
     } else {
       setBlobUrl(null);
     }
-  }, [cv, isPdf]);
+  }, [cv, isPdf, secureUrl]);
 
-  const isImage = cv && (cv.fileType?.startsWith('image') || cv.fileUrl?.startsWith('data:image'));
+  const isImage = cv && (cv.fileType?.startsWith('image') || secureUrl?.startsWith('data:image'));
 
   return (
     <section id="cv" style={{ marginBottom: "80px" }}>
@@ -129,7 +140,7 @@ export default function CvSection() {
             {isPdf ? (
               isMobile ? (
                 <div 
-                  onClick={() => window.open(blobUrl || cv.fileUrl, '_blank')}
+                  onClick={() => setCvFullscreen(true)}
                   style={{
                     width: "100%",
                     padding: "60px 20px",
@@ -154,11 +165,11 @@ export default function CvSection() {
                 </div>
               ) : (
                 <div 
-                  onClick={() => window.open(blobUrl || cv.fileUrl, '_blank')}
+                  onClick={() => setCvFullscreen(true)}
                   style={{ cursor: "pointer" }}
                 >
                   <object
-                    data={blobUrl || cv.fileUrl}
+                    data={blobUrl || secureUrl}
                     type="application/pdf"
                     style={{
                       width: "100%",
@@ -179,7 +190,7 @@ export default function CvSection() {
               )
             ) : isImage ? (
               <img
-                src={cv.fileUrl}
+                src={secureUrl}
                 alt={cv.fileName}
                 style={{
                   width: "100%",
@@ -187,16 +198,86 @@ export default function CvSection() {
                   display: "block",
                   pointerEvents: "none"
                 }}
-                onClick={() => window.open(cv.fileUrl, '_blank')}
+                onClick={() => setCvFullscreen(true)}
               />
             ) : (
-              <div style={{ textAlign: "center", padding: "40px", color: "var(--text-sub)" }} onClick={() => window.open(cv.fileUrl, '_blank')}>
+              <div style={{ textAlign: "center", padding: "40px", color: "var(--text-sub)" }} onClick={() => setCvFullscreen(true)}>
                 <p style={{ marginBottom: "16px" }}>Preview not available for this file type.</p>
                 <button className="btn-primary">
                   View CV
                 </button>
                </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Fullscreen CV Modal */}
+      {cvFullscreen && cv && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          backgroundColor: "rgba(11, 12, 16, 0.98)",
+          zIndex: 99999,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center"
+        }}>
+          {/* Close button */}
+          <button 
+            onClick={() => setCvFullscreen(false)}
+            style={{
+              position: "absolute",
+              top: "20px",
+              right: "20px",
+              background: "rgba(255, 255, 255, 0.1)",
+              border: "1px solid rgba(255, 255, 255, 0.2)",
+              color: "#fff",
+              borderRadius: "50%",
+              width: "40px",
+              height: "40px",
+              fontSize: "20px",
+              cursor: "pointer",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 100000,
+              transition: "background 0.3s"
+            }}
+          >
+            ✕
+          </button>
+          
+          <div style={{ width: "90%", height: "80%", background: "#fff", borderRadius: "12px", overflow: "hidden", position: "relative" }}>
+            {isPdf ? (
+              <iframe
+                src={blobUrl || secureUrl}
+                style={{ width: "100%", height: "100%", border: "none" }}
+                title="CV PDF"
+              />
+            ) : isImage ? (
+              <img
+                src={secureUrl}
+                alt={cv.fileName}
+                style={{ width: "100%", height: "100%", objectFit: "contain", backgroundColor: "#0b0c10" }}
+              />
+            ) : (
+              <div style={{ padding: "40px", textAlign: "center", color: "#000" }}>Cannot display this file type.</div>
+            )}
+          </div>
+
+          <div style={{ marginTop: "15px", display: "flex", gap: "10px" }}>
+            <button 
+              onClick={() => window.open(blobUrl || secureUrl, '_blank')}
+              className="btn-secondary"
+              style={{ fontSize: "14px", padding: "8px 16px", background: "rgba(255, 255, 255, 0.08)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", borderRadius: "8px", cursor: "pointer" }}
+            >
+              ↗ Open in New Tab
+            </button>
           </div>
         </div>
       )}
