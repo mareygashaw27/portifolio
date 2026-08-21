@@ -33,19 +33,35 @@ router.get("/file", async (req, res) => {
       return res.send(buffer);
     }
 
-    const secureUrl = cv.fileUrl.startsWith("http://") ? cv.fileUrl.replace("http://", "https://") : cv.fileUrl;
-    const response = await fetch(secureUrl);
-    if (!response.ok) {
-      return res.status(500).send("Failed to fetch CV file");
+    let secureUrl = cv.fileUrl.startsWith("http://") ? cv.fileUrl.replace("http://", "https://") : cv.fileUrl;
+    if (secureUrl.includes("cloudinary.com") && !secureUrl.includes("/fl_inline/")) {
+      secureUrl = secureUrl.includes("/raw/upload/")
+        ? secureUrl.replace("/raw/upload/", "/image/upload/fl_inline/")
+        : secureUrl.replace("/image/upload/", "/image/upload/fl_inline/");
     }
-    const contentType = response.headers.get("content-type") || "application/pdf";
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
 
-    res.setHeader("Content-Type", contentType);
-    res.setHeader("Content-Disposition", "inline; filename=\"cv.pdf\"");
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.send(buffer);
+    try {
+      const response = await fetch(secureUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+      });
+      if (response.ok) {
+        const contentType = response.headers.get("content-type") || "application/pdf";
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        res.setHeader("Content-Type", contentType);
+        res.setHeader("Content-Disposition", "inline; filename=\"cv.pdf\"");
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        return res.send(buffer);
+      }
+    } catch (e) {
+      console.warn("Fetch failed, redirecting to secureUrl:", e.message);
+    }
+
+    // Fallback: Redirect directly to secureUrl
+    return res.redirect(secureUrl);
   } catch (error) {
     res.status(500).send(error.message);
   }

@@ -145,7 +145,7 @@ export default function CvSection() {
           >
             {isPdf ? (
               <iframe
-                src={`${API_URL}/file`}
+                src={secureUrl?.startsWith('data:') ? secureUrl : `${API_URL}/file`}
                 style={{
                   width: "100%",
                   height: "90vh",
