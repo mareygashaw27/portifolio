@@ -147,139 +147,36 @@ export default function CvSection() {
               position: "relative"
             }}
           >
-            <div 
-              onClick={() => setCvFullscreen(true)}
-              style={{ cursor: "pointer", position: "relative" }}
-            >
-              {isPdf ? (
-                <div style={{ position: "relative", width: "100%", overflow: "hidden", background: "#161b22" }}>
-                  <img
-                    src={jpgPreviewUrl}
-                    alt={cv.fileName || "CV Document"}
-                    style={{
-                      width: "100%",
-                      maxHeight: "75vh",
-                      objectFit: "cover",
-                      objectPosition: "top",
-                      display: "block"
-                    }}
-                    onError={(e) => {
-                      // Fallback if JPG transformation is unavailable
-                      e.target.style.display = "none";
-                    }}
-                  />
-                  <div style={{
-                    position: "absolute",
-                    inset: 0,
-                    background: "linear-gradient(to bottom, rgba(11,16,30,0.1) 60%, rgba(11,16,30,0.8) 100%)",
-                    display: "flex",
-                    alignItems: "flex-end",
-                    justifyContent: "center",
-                    paddingBottom: "24px"
-                  }}>
-                    <button className="btn-primary" style={{ padding: "12px 28px", fontSize: "14px", pointerEvents: "none", boxShadow: "0 4px 20px rgba(97,218,255,0.4)" }}>
-                      🔍 Tap to View Full Document
-                    </button>
-                  </div>
-                </div>
-              ) : isImage ? (
-                <img
-                  src={secureUrl}
-                  alt={cv.fileName || "CV Image"}
-                  style={{
-                    width: "100%",
-                    height: "auto",
-                    display: "block"
-                  }}
-                />
-              ) : (
-                <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--text-sub)" }}>
-                  <p style={{ marginBottom: "16px", fontSize: "16px" }}>📄 Tap to View CV Document</p>
-                  <button className="btn-primary" style={{ pointerEvents: "none" }}>
-                    View CV
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Fullscreen CV Modal */}
-      {cvFullscreen && cv && (
-        <div
-          onClick={() => setCvFullscreen(false)}
-          style={{
-            position: 'fixed', inset: 0, zIndex: 99999,
-            background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(12px)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: '20px', animation: 'cvFadeIn 0.2s ease'
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              position: 'relative', width: '100%', maxWidth: '950px',
-              height: '85vh',
-              background: 'rgba(13,17,23,0.98)', borderRadius: '20px',
-              border: '1px solid rgba(97,218,255,0.3)',
-              boxShadow: '0 30px 80px rgba(0,0,0,0.7)',
-              overflow: 'hidden', display: 'flex', flexDirection: 'column',
-              animation: 'cvSlideUp 0.25s ease'
-            }}
-          >
-            {/* Close */}
-            <button
-              onClick={() => setCvFullscreen(false)}
-              style={{
-                position: 'absolute', top: '14px', right: '14px', zIndex: 10,
-                background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.2)',
-                borderRadius: '50%', width: '36px', height: '36px',
-                cursor: 'pointer', color: '#fff', fontSize: '18px',
-                display: 'flex', alignItems: 'center', justifyContent: 'center'
-              }}
-            >✕</button>
-
-            {/* Content area */}
-            <div style={{ flex: 1, background: '#fff', position: 'relative' }}>
-              {isPdf ? (
-                <iframe
-                  src={inlineUrl}
-                  style={{ width: '100%', height: '100%', border: 'none' }}
-                  title="CV PDF"
-                />
-              ) : isImage ? (
-                <img
-                  src={secureUrl}
-                  alt={cv.fileName}
-                  style={{ width: '100%', height: '100%', objectFit: 'contain', backgroundColor: '#0b0c10' }}
-                />
-              ) : (
-                <div style={{ padding: '40px', textAlign: 'center', color: '#000' }}>Cannot display this file type.</div>
-              )}
-            </div>
-
-            {/* Info bar at bottom */}
-            <div style={{
-              padding: '18px 24px', display: 'flex', alignItems: 'center',
-              justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px',
-              background: 'rgba(13,17,23,0.98)'
-            }}>
-              <div>
-                <h3 style={{ fontSize: '16px', fontWeight: '700', margin: '0', color: '#fff' }}>
-                  {cv.fileName || "Curriculum Vitae"}
-                </h3>
+            {isPdf ? (
+              <iframe
+                src={inlineUrl}
+                style={{
+                  width: "100%",
+                  height: "90vh",
+                  border: "none",
+                  display: "block",
+                  background: "#fff",
+                  borderRadius: "16px"
+                }}
+                title="Curriculum Vitae PDF"
+              />
+            ) : isImage ? (
+              <img
+                src={secureUrl}
+                alt={cv.fileName || "CV Image"}
+                style={{
+                  width: "100%",
+                  height: "auto",
+                  display: "block",
+                  borderRadius: "16px"
+                }}
+              />
+            ) : (
+              <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--text-sub)" }}>
+                <p style={{ fontSize: "16px" }}>📄 CV Document</p>
               </div>
-            </div>
+            )}
           </div>
-          
-          <style>{`
-            @keyframes cvFadeIn { from { opacity: 0; } to { opacity: 1; } }
-            @keyframes cvSlideUp {
-              from { opacity: 0; transform: translateY(30px) scale(0.97); }
-              to { opacity: 1; transform: translateY(0) scale(1); }
-            }
-          `}</style>
         </div>
       )}
 
