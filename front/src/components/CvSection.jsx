@@ -102,11 +102,91 @@ export default function CvSection() {
 
   const isImage = cv && (cv.fileType?.startsWith('image') || secureUrl?.startsWith('data:image'));
 
+  const [activeTab, setActiveTab] = useState('pdf'); // 'pdf' by default so uploaded PDF is shown directly
+
   return (
     <section id="cv" style={{ marginBottom: "80px" }}>
-      <h2 style={{ fontSize: "28px", fontWeight: "700", marginBottom: "30px", textAlign: "center" }}>
-        <span className="gradient-text">Curriculum Vitae (CV)</span>
-      </h2>
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        flexWrap: "wrap",
+        gap: "16px",
+        marginBottom: "24px"
+      }}>
+        <h2 style={{ fontSize: "28px", fontWeight: "700", margin: 0 }}>
+          <span className="gradient-text">Curriculum Vitae (CV)</span>
+        </h2>
+
+        {/* Action Controls & Tab Switcher */}
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+          {/* View Toggle */}
+          <div style={{
+            display: "inline-flex",
+            padding: "4px",
+            borderRadius: "10px",
+            background: "rgba(255, 255, 255, 0.05)",
+            border: "1px solid var(--border-color)"
+          }}>
+            <button
+              onClick={() => setActiveTab('card')}
+              style={{
+                padding: "6px 14px",
+                borderRadius: "8px",
+                border: "none",
+                background: activeTab === 'card' ? "var(--primary-gradient)" : "transparent",
+                color: activeTab === 'card' ? "#000" : "var(--text-sub)",
+                fontSize: "13px",
+                fontWeight: "700",
+                cursor: "pointer",
+                transition: "all 0.2s ease"
+              }}
+            >
+              📄 CV Overview
+            </button>
+            <button
+              onClick={() => setActiveTab('pdf')}
+              style={{
+                padding: "6px 14px",
+                borderRadius: "8px",
+                border: "none",
+                background: activeTab === 'pdf' ? "var(--primary-gradient)" : "transparent",
+                color: activeTab === 'pdf' ? "#000" : "var(--text-sub)",
+                fontSize: "13px",
+                fontWeight: "700",
+                cursor: "pointer",
+                transition: "all 0.2s ease"
+              }}
+            >
+              👁️ PDF Viewer
+            </button>
+          </div>
+
+          {/* Download Button */}
+          {secureUrl && (
+            <a
+              href={secureUrl}
+              download={cv?.fileName || "Marey_Gashaw_CV.pdf"}
+              style={{
+                padding: "8px 16px",
+                borderRadius: "10px",
+                background: "var(--primary-gradient, linear-gradient(135deg, #61dafb 0%, #a855f7 100%))",
+                color: "#000",
+                fontSize: "13px",
+                fontWeight: "700",
+                textDecoration: "none",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                boxShadow: "0 4px 15px rgba(97, 218, 255, 0.3)"
+              }}
+            >
+              📥 Download PDF
+            </a>
+          )}
+        </div>
+      </div>
+
       {/* Loading State */}
       {loading && (
         <div style={{ textAlign: "center", padding: "60px 0", color: "var(--text-sub)" }}>
@@ -114,99 +194,271 @@ export default function CvSection() {
         </div>
       )}
 
-      {/* Empty State */}
-      {!loading && !cv && (
-        <div className="glass-card" style={{
-          padding: "60px 24px",
-          textAlign: "center",
-          maxWidth: "600px",
-          margin: "0 auto"
-        }}>
-          <div style={{ fontSize: "40px", marginBottom: "16px" }}>📁</div>
-          <h3 style={{ fontSize: "20px", fontWeight: "700", marginBottom: "8px" }}>No CV Uploaded Yet</h3>
-          <p style={{ color: "var(--text-sub)", fontSize: "14px", margin: 0 }}>
-            ✨ The uploaded CV document will be displayed here once available.
-          </p>
-        </div>
-      )}
-
-      {/* Uploaded CV View */}
-      {!loading && cv && (
+      {/* Main CV Content Display */}
+      {!loading && (
         <div style={{ maxWidth: "900px", margin: "0 auto" }}>
 
-          {/* CV Viewer */}
-          <div
-            style={{
+          {/* TAB 1: Responsive Interactive CV Card (100% mobile & PC compatible) */}
+          {activeTab === 'card' && (
+            <div className="glass-card" style={{
+              borderRadius: "16px",
+              overflow: "hidden",
+              border: "1px solid rgba(97, 218, 255, 0.3)",
+              boxShadow: "0 15px 40px rgba(0, 0, 0, 0.4)",
+              background: "#0d1117",
+              color: "#fff"
+            }}>
+              {/* Header Bar */}
+              <div style={{
+                background: "linear-gradient(135deg, #0b2545 0%, #134074 100%)",
+                padding: "24px 30px",
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "20px",
+                borderBottom: "3px solid #61dafb"
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" }}>
+                  <img
+                    src="/mar.jpg"
+                    alt="Marey Gashaw"
+                    style={{
+                      width: "85px",
+                      height: "85px",
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                      border: "3px solid #61dafb",
+                      boxShadow: "0 4px 15px rgba(0, 0, 0, 0.3)"
+                    }}
+                    onError={(e) => { e.target.src = "/mar.png"; }}
+                  />
+                  <div>
+                    <h1 style={{ fontSize: "28px", fontWeight: "800", margin: "0 0 6px 0", color: "#ffffff", letterSpacing: "0.5px" }}>
+                      Marey Gashaw
+                    </h1>
+                    <p style={{ fontSize: "15px", color: "#61dafb", margin: 0, fontWeight: "600" }}>
+                      Information Technology Student & Full-Stack Developer
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "6px",
+                  fontSize: "13px",
+                  color: "rgba(255, 255, 255, 0.9)"
+                }}>
+                  <div>📞 +251 943 454 397</div>
+                  <div>📧 mareygashaw21@gmail.com</div>
+                  <div>📍 Kombolcha, Ethiopia</div>
+                </div>
+              </div>
+
+              {/* Body Content */}
+              <div style={{ padding: "30px", display: "flex", flexDirection: "column", gap: "28px" }}>
+                
+                {/* Education Section */}
+                <div>
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    borderBottom: "2px solid rgba(97, 218, 255, 0.2)",
+                    paddingBottom: "8px",
+                    marginBottom: "16px"
+                  }}>
+                    <span style={{ fontSize: "20px" }}>🎓</span>
+                    <h3 style={{ fontSize: "20px", fontWeight: "700", margin: 0, color: "#61dafb" }}>
+                      Education
+                    </h3>
+                  </div>
+
+                  <div style={{
+                    background: "rgba(255, 255, 255, 0.03)",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    borderRadius: "12px",
+                    padding: "20px"
+                  }}>
+                    <h4 style={{ fontSize: "17px", fontWeight: "700", color: "#fff", margin: "0 0 6px 0" }}>
+                      Bachelor of Science in Information Technology
+                    </h4>
+                    <p style={{ fontSize: "15px", color: "var(--text-sub)", margin: "0 0 10px 0", fontWeight: "500" }}>
+                      Wollo University, Ethiopia
+                    </p>
+                    <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+                      <span style={{
+                        padding: "4px 12px",
+                        borderRadius: "6px",
+                        background: "rgba(97, 218, 255, 0.15)",
+                        color: "#61dafb",
+                        fontSize: "13px",
+                        fontWeight: "600"
+                      }}>
+                        3rd Year Student
+                      </span>
+                      <span style={{
+                        padding: "4px 12px",
+                        borderRadius: "6px",
+                        background: "rgba(16, 185, 129, 0.15)",
+                        color: "#10b981",
+                        fontSize: "13px",
+                        fontWeight: "600"
+                      }}>
+                        Current CGPA: 3.37
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Summary Section */}
+                <div>
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    borderBottom: "2px solid rgba(97, 218, 255, 0.2)",
+                    paddingBottom: "8px",
+                    marginBottom: "16px"
+                  }}>
+                    <span style={{ fontSize: "20px" }}>📝</span>
+                    <h3 style={{ fontSize: "20px", fontWeight: "700", margin: 0, color: "#61dafb" }}>
+                      Summary
+                    </h3>
+                  </div>
+                  <p style={{
+                    fontSize: "15px",
+                    lineHeight: "1.8",
+                    color: "var(--text-sub)",
+                    margin: 0
+                  }}>
+                    Passionate Information Technology student with hands-on experience in Full-Stack Web Development, building modern web applications using HTML, CSS, JavaScript, React.js, Node.js, Express.js, PHP, Laravel, and MySQL. Problem solver focused on creating scalable digital solutions.
+                  </p>
+                </div>
+
+                {/* Technical Skills */}
+                <div>
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    borderBottom: "2px solid rgba(97, 218, 255, 0.2)",
+                    paddingBottom: "8px",
+                    marginBottom: "16px"
+                  }}>
+                    <span style={{ fontSize: "20px" }}>💻</span>
+                    <h3 style={{ fontSize: "20px", fontWeight: "700", margin: 0, color: "#61dafb" }}>
+                      Key Skills & Technologies
+                    </h3>
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+                    {["React.js", "Node.js", "Express.js", "JavaScript", "HTML/CSS", "PHP", "Laravel", "MySQL", "Java", "Git", "REST APIs", "Video Editing"].map((skill, i) => (
+                      <span key={i} style={{
+                        padding: "6px 14px",
+                        borderRadius: "8px",
+                        background: "rgba(255, 255, 255, 0.05)",
+                        border: "1px solid var(--border-color)",
+                        color: "#fff",
+                        fontSize: "13px",
+                        fontWeight: "500"
+                      }}>
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: Direct PDF Viewer / Embedded PDF View */}
+          {activeTab === 'pdf' && (
+            <div style={{
               borderRadius: "16px",
               overflow: "hidden",
               background: "#161b22",
               border: "1px solid rgba(97, 218, 255, 0.3)",
               boxShadow: "0 10px 40px rgba(0, 0, 0, 0.5)",
               position: "relative"
-            }}
-          >
-            {/* Header Bar */}
-            <div style={{
-              padding: "12px 20px",
-              background: "rgba(13, 17, 23, 0.95)",
-              borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between"
             }}>
-              <span style={{ color: "#fff", fontSize: "14px", fontWeight: "600" }}>
-                📄 {cv?.fileName || "Curriculum Vitae"}
-              </span>
-              <a
-                href={secureUrl?.startsWith('data:') ? secureUrl : `${API_URL}/file`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  color: "#61dafb",
-                  fontSize: "12px",
-                  textDecoration: "none",
-                  padding: "4px 12px",
-                  borderRadius: "12px",
-                  background: "rgba(97, 218, 255, 0.1)",
-                  border: "1px solid rgba(97, 218, 255, 0.2)"
-                }}
-              >
-                ↗ Fullscreen
-              </a>
-            </div>
+              {/* PDF Header Bar */}
+              <div style={{
+                padding: "12px 20px",
+                background: "rgba(13, 17, 23, 0.95)",
+                borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: "10px"
+              }}>
+                <span style={{ color: "#fff", fontSize: "14px", fontWeight: "600" }}>
+                  📄 {cv?.fileName || "Marey cv.pdf"}
+                </span>
 
-            {isPdf ? (
-              <iframe
-                src={secureUrl?.startsWith('data:') ? secureUrl : `https://docs.google.com/gview?url=${encodeURIComponent(secureUrl)}&embedded=true`}
-                style={{
-                  width: "100%",
-                  height: "85vh",
-                  border: "none",
-                  display: "block",
-                  background: "#161b22"
-                }}
-                title="Curriculum Vitae PDF"
-              />
-            ) : isImage ? (
-              <img
-                src={secureUrl}
-                alt={cv.fileName || "CV Image"}
-                style={{
-                  width: "100%",
-                  height: "auto",
-                  display: "block",
-                  borderRadius: "16px"
-                }}
-              />
-            ) : (
-              <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--text-sub)" }}>
-                <p style={{ fontSize: "16px" }}>📄 CV Document</p>
+                {secureUrl && (
+                  <a
+                    href={secureUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      padding: "6px 14px",
+                      borderRadius: "6px",
+                      background: "rgba(97, 218, 255, 0.15)",
+                      border: "1px solid var(--border-accent)",
+                      color: "var(--primary)",
+                      fontSize: "13px",
+                      fontWeight: "600",
+                      textDecoration: "none"
+                    }}
+                  >
+                    ↗️ Open PDF in New Tab
+                  </a>
+                )}
               </div>
-            )}
-          </div>
+
+              {isPdf ? (
+                <object
+                  data={blobUrl || inlineUrl || secureUrl || `${API_BASE_URL}/api/cv/file`}
+                  type="application/pdf"
+                  style={{
+                    width: "100%",
+                    height: "80vh",
+                    border: "none",
+                    display: "block",
+                    background: "#161b22"
+                  }}
+                >
+                  <iframe
+                    src={blobUrl || inlineUrl || secureUrl || `${API_BASE_URL}/api/cv/file`}
+                    style={{
+                      width: "100%",
+                      height: "80vh",
+                      border: "none",
+                      display: "block",
+                      background: "#161b22"
+                    }}
+                    title="CV PDF Viewer"
+                  />
+                </object>
+              ) : isImage ? (
+                <img
+                  src={secureUrl}
+                  alt={cv?.fileName || "CV Image"}
+                  style={{ width: "100%", height: "auto", display: "block", borderRadius: "16px" }}
+                />
+              ) : (
+                <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--text-sub)" }}>
+                  <p style={{ fontSize: "16px" }}>📄 Standard PDF Document View</p>
+                </div>
+              )}
+            </div>
+          )}
+
         </div>
       )}
-
     </section>
   );
 }
