@@ -81,12 +81,7 @@ export default function CvSection() {
   }, [secureUrl]);
 
   const openCvFile = () => {
-    if (!secureUrl) return;
-    let target = pdfBlobUrl || secureUrl;
-    if (secureUrl.includes('cloudinary.com') || secureUrl.toLowerCase().includes('.pdf')) {
-      target = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(secureUrl)}`;
-    }
-    window.open(target, '_blank');
+    window.open(`${API_BASE_URL}/api/cv/file`, '_blank');
   };
 
   return (

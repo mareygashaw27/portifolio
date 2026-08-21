@@ -70,35 +70,7 @@ export default function Navbar({ onOpenModal, onOpenLogin, onOpenAdminPanel, act
             onClick={(e) => {
               e.preventDefault();
               if (link.id === 'cv') {
-                const localCv = localStorage.getItem('portfolio_local_cv');
-                if (localCv) {
-                  try {
-                    const parsed = JSON.parse(localCv);
-                    if (parsed && parsed.fileUrl) {
-                      let fileUrl = parsed.fileUrl.startsWith('http://') ? parsed.fileUrl.replace('http://', 'https://') : parsed.fileUrl;
-                      let targetUrl = fileUrl;
-
-                      if (fileUrl.startsWith('data:')) {
-                        const parts = fileUrl.split(';base64,');
-                        const contentType = parts[0].replace('data:', '') || 'application/pdf';
-                        const byteCharacters = atob(parts[1]);
-                        const byteNumbers = new Array(byteCharacters.length);
-                        for (let i = 0; i < byteCharacters.length; i++) {
-                          byteNumbers[i] = byteCharacters.charCodeAt(i);
-                        }
-                        const byteArray = new Uint8Array(byteNumbers);
-                        const blob = new Blob([byteArray], { type: contentType });
-                        targetUrl = URL.createObjectURL(blob);
-                      } else if (fileUrl.includes('cloudinary.com') || fileUrl.toLowerCase().includes('.pdf')) {
-                        targetUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(fileUrl)}`;
-                      }
-
-                      window.open(targetUrl, '_blank');
-                    }
-                  } catch (err) {
-                    console.error("Error opening CV link:", err);
-                  }
-                }
+                window.open(`${API_BASE_URL}/api/cv/file`, '_blank');
               }
               setActiveSection(link.id);
             }}
@@ -219,35 +191,7 @@ export default function Navbar({ onOpenModal, onOpenLogin, onOpenAdminPanel, act
                 e.preventDefault();
                 setMobileOpen(false);
                 if (link.id === 'cv') {
-                  const localCv = localStorage.getItem('portfolio_local_cv');
-                  if (localCv) {
-                    try {
-                      const parsed = JSON.parse(localCv);
-                      if (parsed && parsed.fileUrl) {
-                        let fileUrl = parsed.fileUrl.startsWith('http://') ? parsed.fileUrl.replace('http://', 'https://') : parsed.fileUrl;
-                        let targetUrl = fileUrl;
-
-                        if (fileUrl.startsWith('data:')) {
-                          const parts = fileUrl.split(';base64,');
-                          const contentType = parts[0].replace('data:', '') || 'application/pdf';
-                          const byteCharacters = atob(parts[1]);
-                          const byteNumbers = new Array(byteCharacters.length);
-                          for (let i = 0; i < byteCharacters.length; i++) {
-                            byteNumbers[i] = byteCharacters.charCodeAt(i);
-                          }
-                          const byteArray = new Uint8Array(byteNumbers);
-                          const blob = new Blob([byteArray], { type: contentType });
-                          targetUrl = URL.createObjectURL(blob);
-                        } else if (fileUrl.includes('cloudinary.com') || fileUrl.toLowerCase().includes('.pdf')) {
-                          targetUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(fileUrl)}`;
-                        }
-
-                        window.open(targetUrl, '_blank');
-                      }
-                    } catch (err) {
-                      console.error("Error opening CV link:", err);
-                    }
-                  }
+                  window.open(`${API_BASE_URL}/api/cv/file`, '_blank');
                 }
                 setActiveSection(link.id);
               }}
