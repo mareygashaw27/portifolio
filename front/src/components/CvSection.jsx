@@ -144,9 +144,8 @@ export default function CvSection() {
             }}
           >
             {isPdf ? (
-              <object
-                data={inlineUrl}
-                type="application/pdf"
+              <iframe
+                src={`${API_URL}/file`}
                 style={{
                   width: "100%",
                   height: "90vh",
@@ -155,20 +154,8 @@ export default function CvSection() {
                   background: "#0b0c10",
                   borderRadius: "16px"
                 }}
-              >
-                <iframe
-                  src={`https://docs.google.com/gview?url=${encodeURIComponent(secureUrl)}&embedded=true`}
-                  style={{
-                    width: "100%",
-                    height: "90vh",
-                    border: "none",
-                    display: "block",
-                    background: "#0b0c10",
-                    borderRadius: "16px"
-                  }}
-                  title="Curriculum Vitae PDF"
-                />
-              </object>
+                title="Curriculum Vitae PDF"
+              />
             ) : isImage ? (
               <img
                 src={secureUrl}

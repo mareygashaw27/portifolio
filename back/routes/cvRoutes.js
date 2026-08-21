@@ -14,6 +14,43 @@ router.get("/", async (req, res) => {
   }
 });
 
+// GET: Stream CV PDF file directly with CORS & inline headers
+router.get("/file", async (req, res) => {
+  try {
+    const cv = await Cv.findOne().sort({ uploadedAt: -1 });
+    if (!cv || !cv.fileUrl) {
+      return res.status(404).send("CV not found");
+    }
+
+    // Handle base64 Data URIs directly
+    if (cv.fileUrl.startsWith("data:")) {
+      const parts = cv.fileUrl.split(";base64,");
+      const contentType = parts[0].replace("data:", "") || "application/pdf";
+      const buffer = Buffer.from(parts[1], "base64");
+      res.setHeader("Content-Type", contentType);
+      res.setHeader("Content-Disposition", "inline; filename=\"cv.pdf\"");
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      return res.send(buffer);
+    }
+
+    const secureUrl = cv.fileUrl.startsWith("http://") ? cv.fileUrl.replace("http://", "https://") : cv.fileUrl;
+    const response = await fetch(secureUrl);
+    if (!response.ok) {
+      return res.status(500).send("Failed to fetch CV file");
+    }
+    const contentType = response.headers.get("content-type") || "application/pdf";
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Content-Disposition", "inline; filename=\"cv.pdf\"");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.send(buffer);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});
+
 // POST: Upload/replace CV (Admin Only)
 router.post("/", authMiddleware, async (req, res) => {
   try {

@@ -29,7 +29,9 @@ async function uploadToCloudinary(base64Data, folder, resourceType = "auto") {
     return result.secure_url;
   } catch (err) {
     console.error("Cloudinary upload error:", err.message);
-    throw new Error("File upload to cloud failed: " + err.message);
+    // Fallback: If Cloudinary fails (e.g. timestamp/stale request error), return base64 data URI directly
+    console.warn("Falling back to storing base64 Data URI directly in database.");
+    return base64Data;
   }
 }
 
