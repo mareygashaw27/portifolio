@@ -139,20 +139,51 @@ export default function CvSection() {
             style={{
               borderRadius: "16px",
               overflow: "hidden",
-              background: "#0b0c10",
+              background: "#161b22",
+              border: "1px solid rgba(97, 218, 255, 0.3)",
+              boxShadow: "0 10px 40px rgba(0, 0, 0, 0.5)",
               position: "relative"
             }}
           >
+            {/* Header Bar */}
+            <div style={{
+              padding: "12px 20px",
+              background: "rgba(13, 17, 23, 0.95)",
+              borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between"
+            }}>
+              <span style={{ color: "#fff", fontSize: "14px", fontWeight: "600" }}>
+                📄 {cv?.fileName || "Curriculum Vitae"}
+              </span>
+              <a
+                href={secureUrl?.startsWith('data:') ? secureUrl : `${API_URL}/file`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: "#61dafb",
+                  fontSize: "12px",
+                  textDecoration: "none",
+                  padding: "4px 12px",
+                  borderRadius: "12px",
+                  background: "rgba(97, 218, 255, 0.1)",
+                  border: "1px solid rgba(97, 218, 255, 0.2)"
+                }}
+              >
+                ↗ Fullscreen
+              </a>
+            </div>
+
             {isPdf ? (
               <iframe
                 src={secureUrl?.startsWith('data:') ? secureUrl : `${API_URL}/file`}
                 style={{
                   width: "100%",
-                  height: "90vh",
+                  height: "85vh",
                   border: "none",
                   display: "block",
-                  background: "#0b0c10",
-                  borderRadius: "16px"
+                  background: "#161b22"
                 }}
                 title="Curriculum Vitae PDF"
               />
