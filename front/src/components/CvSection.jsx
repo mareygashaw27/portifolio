@@ -168,8 +168,9 @@ export default function CvSection() {
                   onClick={() => setCvFullscreen(true)}
                   style={{ cursor: "pointer" }}
                 >
-                  <iframe
-                    src={`https://docs.google.com/gview?url=${encodeURIComponent(secureUrl)}&embedded=true`}
+                  <embed
+                    src={secureUrl}
+                    type="application/pdf"
                     style={{
                       width: "100%",
                       height: "90vh",
@@ -178,7 +179,6 @@ export default function CvSection() {
                       background: "#fff",
                       pointerEvents: "none"
                     }}
-                    title="CV PDF Inline"
                   />
                 </div>
               )
@@ -244,10 +244,10 @@ export default function CvSection() {
             {/* Content area */}
             <div style={{ flex: 1, background: '#fff', position: 'relative' }}>
               {isPdf ? (
-                <iframe
-                  src={`https://docs.google.com/gview?url=${encodeURIComponent(secureUrl)}&embedded=true`}
+                <embed
+                  src={secureUrl}
+                  type="application/pdf"
                   style={{ width: '100%', height: '100%', border: 'none' }}
-                  title="CV PDF"
                 />
               ) : isImage ? (
                 <img
