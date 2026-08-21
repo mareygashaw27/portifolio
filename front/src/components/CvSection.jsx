@@ -62,14 +62,12 @@ export default function CvSection() {
     : null;
 
   const inlineUrl = cv && secureUrl
-    ? (secureUrl.includes('cloudinary.com') && !secureUrl.includes('/fl_inline/')
-        ? secureUrl.replace('/upload/', '/upload/fl_inline/')
-        : secureUrl)
-    : null;
-
-  const jpgPreviewUrl = cv && secureUrl
     ? (secureUrl.includes('cloudinary.com')
-        ? inlineUrl.replace('/raw/upload/', '/image/upload/').replace(/\.pdf$/i, '.jpg')
+        ? (secureUrl.includes('/raw/upload/')
+            ? secureUrl.replace('/raw/upload/', '/image/upload/fl_inline/')
+            : (!secureUrl.includes('/fl_inline/')
+                ? secureUrl.replace('/image/upload/', '/image/upload/fl_inline/')
+                : secureUrl))
         : secureUrl)
     : null;
 
@@ -136,30 +134,41 @@ export default function CvSection() {
       {!loading && cv && (
         <div style={{ maxWidth: "900px", margin: "0 auto" }}>
 
-          {/* Download bar removed as requested */}
-
           {/* CV Viewer */}
           <div
             style={{
               borderRadius: "16px",
               overflow: "hidden",
-              background: "rgba(11, 16, 30, 0.7)",
+              background: "#0b0c10",
               position: "relative"
             }}
           >
             {isPdf ? (
-              <iframe
-                src={inlineUrl}
+              <object
+                data={inlineUrl}
+                type="application/pdf"
                 style={{
                   width: "100%",
                   height: "90vh",
                   border: "none",
                   display: "block",
-                  background: "#fff",
+                  background: "#0b0c10",
                   borderRadius: "16px"
                 }}
-                title="Curriculum Vitae PDF"
-              />
+              >
+                <iframe
+                  src={`https://docs.google.com/gview?url=${encodeURIComponent(secureUrl)}&embedded=true`}
+                  style={{
+                    width: "100%",
+                    height: "90vh",
+                    border: "none",
+                    display: "block",
+                    background: "#0b0c10",
+                    borderRadius: "16px"
+                  }}
+                  title="Curriculum Vitae PDF"
+                />
+              </object>
             ) : isImage ? (
               <img
                 src={secureUrl}
