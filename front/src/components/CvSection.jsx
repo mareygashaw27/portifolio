@@ -168,9 +168,8 @@ export default function CvSection() {
                   onClick={() => setCvFullscreen(true)}
                   style={{ cursor: "pointer" }}
                 >
-                  <object
-                    data={blobUrl || secureUrl}
-                    type="application/pdf"
+                  <iframe
+                    src={`https://docs.google.com/gview?url=${encodeURIComponent(secureUrl)}&embedded=true`}
                     style={{
                       width: "100%",
                       height: "90vh",
@@ -179,13 +178,8 @@ export default function CvSection() {
                       background: "#fff",
                       pointerEvents: "none"
                     }}
-                  >
-                    <p style={{ textAlign: "center", padding: "40px", color: "#555" }}>
-                      PDF preview not available in this browser.
-                      <br/>
-                      <span style={{ color: "#0070f3", textDecoration: "underline" }}>Click to open PDF</span>
-                    </p>
-                  </object>
+                    title="CV PDF Inline"
+                  />
                 </div>
               )
             ) : isImage ? (
@@ -214,71 +208,79 @@ export default function CvSection() {
 
       {/* Fullscreen CV Modal */}
       {cvFullscreen && cv && (
-        <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100vw",
-          height: "100vh",
-          backgroundColor: "rgba(11, 12, 16, 0.98)",
-          zIndex: 99999,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center"
-        }}>
-          {/* Close button */}
-          <button 
-            onClick={() => setCvFullscreen(false)}
+        <div
+          onClick={() => setCvFullscreen(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 99999,
+            background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(12px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '20px', animation: 'cvFadeIn 0.2s ease'
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
             style={{
-              position: "absolute",
-              top: "20px",
-              right: "20px",
-              background: "rgba(255, 255, 255, 0.1)",
-              border: "1px solid rgba(255, 255, 255, 0.2)",
-              color: "#fff",
-              borderRadius: "50%",
-              width: "40px",
-              height: "40px",
-              fontSize: "20px",
-              cursor: "pointer",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              zIndex: 100000,
-              transition: "background 0.3s"
+              position: 'relative', width: '100%', maxWidth: '950px',
+              height: '85vh',
+              background: 'rgba(13,17,23,0.98)', borderRadius: '20px',
+              border: '1px solid rgba(97,218,255,0.3)',
+              boxShadow: '0 30px 80px rgba(0,0,0,0.7)',
+              overflow: 'hidden', display: 'flex', flexDirection: 'column',
+              animation: 'cvSlideUp 0.25s ease'
             }}
           >
-            ✕
-          </button>
-          
-          <div style={{ width: "90%", height: "80%", background: "#fff", borderRadius: "12px", overflow: "hidden", position: "relative" }}>
-            {isPdf ? (
-              <iframe
-                src={blobUrl || secureUrl}
-                style={{ width: "100%", height: "100%", border: "none" }}
-                title="CV PDF"
-              />
-            ) : isImage ? (
-              <img
-                src={secureUrl}
-                alt={cv.fileName}
-                style={{ width: "100%", height: "100%", objectFit: "contain", backgroundColor: "#0b0c10" }}
-              />
-            ) : (
-              <div style={{ padding: "40px", textAlign: "center", color: "#000" }}>Cannot display this file type.</div>
-            )}
-          </div>
+            {/* Close */}
+            <button
+              onClick={() => setCvFullscreen(false)}
+              style={{
+                position: 'absolute', top: '14px', right: '14px', zIndex: 10,
+                background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.2)',
+                borderRadius: '50%', width: '36px', height: '36px',
+                cursor: 'pointer', color: '#fff', fontSize: '18px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}
+            >✕</button>
 
-          <div style={{ marginTop: "15px", display: "flex", gap: "10px" }}>
-            <button 
-              onClick={() => window.open(blobUrl || secureUrl, '_blank')}
-              className="btn-secondary"
-              style={{ fontSize: "14px", padding: "8px 16px", background: "rgba(255, 255, 255, 0.08)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", borderRadius: "8px", cursor: "pointer" }}
-            >
-              ↗ Open in New Tab
-            </button>
+            {/* Content area */}
+            <div style={{ flex: 1, background: '#fff', position: 'relative' }}>
+              {isPdf ? (
+                <iframe
+                  src={`https://docs.google.com/gview?url=${encodeURIComponent(secureUrl)}&embedded=true`}
+                  style={{ width: '100%', height: '100%', border: 'none' }}
+                  title="CV PDF"
+                />
+              ) : isImage ? (
+                <img
+                  src={secureUrl}
+                  alt={cv.fileName}
+                  style={{ width: '100%', height: '100%', objectFit: 'contain', backgroundColor: '#0b0c10' }}
+                />
+              ) : (
+                <div style={{ padding: '40px', textAlign: 'center', color: '#000' }}>Cannot display this file type.</div>
+              )}
+            </div>
+
+            {/* Info bar at bottom */}
+            <div style={{
+              padding: '18px 24px', display: 'flex', alignItems: 'center',
+              justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px',
+              background: 'rgba(13,17,23,0.98)'
+            }}>
+              <div>
+                <h3 style={{ fontSize: '16px', fontWeight: '700', margin: '0', color: '#fff' }}>
+                  {cv.fileName || "Curriculum Vitae"}
+                </h3>
+              </div>
+            </div>
           </div>
+          
+          <style>{`
+            @keyframes cvFadeIn { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes cvSlideUp {
+              from { opacity: 0; transform: translateY(30px) scale(0.97); }
+              to { opacity: 1; transform: translateY(0) scale(1); }
+            }
+          `}</style>
         </div>
       )}
 
