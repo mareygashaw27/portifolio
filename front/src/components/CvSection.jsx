@@ -61,6 +61,18 @@ export default function CvSection() {
     ? (cv.fileUrl.startsWith('http://') ? cv.fileUrl.replace('http://', 'https://') : cv.fileUrl)
     : null;
 
+  const inlineUrl = cv && secureUrl
+    ? (secureUrl.includes('cloudinary.com') && !secureUrl.includes('/fl_inline/')
+        ? secureUrl.replace('/upload/', '/upload/fl_inline/')
+        : secureUrl)
+    : null;
+
+  const jpgPreviewUrl = cv && secureUrl
+    ? (secureUrl.includes('cloudinary.com')
+        ? inlineUrl.replace('/raw/upload/', '/image/upload/').replace(/\.pdf$/i, '.jpg')
+        : secureUrl)
+    : null;
+
   const isPdf = cv && (
     cv.fileType?.includes('pdf') ||
     secureUrl?.startsWith('data:application/pdf') ||
@@ -75,8 +87,6 @@ export default function CvSection() {
         setBlobUrl(secureUrl);
         return;
       }
-      // Fetch the file and create a local Blob URL to force application/pdf MIME type
-      // This prevents the browser from forcing a download due to missing .pdf extensions from the backend
       fetch(secureUrl)
         .then(res => res.blob())
         .then(blob => {
@@ -85,7 +95,7 @@ export default function CvSection() {
         })
         .catch(err => {
           console.error("Error creating Blob URL for CV", err);
-          setBlobUrl(secureUrl); // fallback
+          setBlobUrl(secureUrl);
         });
     } else {
       setBlobUrl(null);
@@ -137,71 +147,60 @@ export default function CvSection() {
               position: "relative"
             }}
           >
-            {isPdf ? (
-              isMobile ? (
-                <div 
-                  onClick={() => setCvFullscreen(true)}
-                  style={{
-                    width: "100%",
-                    padding: "60px 20px",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: "linear-gradient(135deg, #1e2029 0%, #0b0c10 100%)",
-                    border: "1px solid rgba(255, 255, 255, 0.05)",
-                    textAlign: "center",
-                    cursor: "pointer"
-                  }}
-                >
-                  <span style={{ fontSize: "60px", marginBottom: "16px" }}>📄</span>
-                  <h3 style={{ fontSize: "20px", fontWeight: "700", marginBottom: "8px", color: "#fff" }}>PDF Document</h3>
-                  <p style={{ color: "var(--text-sub)", marginBottom: "24px", fontSize: "14px" }}>
-                    Tap here to open and read the full CV.
-                  </p>
-                  <div className="btn-primary" style={{ padding: "10px 24px", pointerEvents: "none", fontSize: "14px" }}>
-                    {blobUrl ? "Open Full CV" : "Loading PDF..."}
-                  </div>
-                </div>
-              ) : (
-                <div 
-                  onClick={() => setCvFullscreen(true)}
-                  style={{ cursor: "pointer" }}
-                >
-                  <embed
-                    src={secureUrl}
-                    type="application/pdf"
+            <div 
+              onClick={() => setCvFullscreen(true)}
+              style={{ cursor: "pointer", position: "relative" }}
+            >
+              {isPdf ? (
+                <div style={{ position: "relative", width: "100%", overflow: "hidden", background: "#161b22" }}>
+                  <img
+                    src={jpgPreviewUrl}
+                    alt={cv.fileName || "CV Document"}
                     style={{
                       width: "100%",
-                      height: "90vh",
-                      border: "none",
-                      display: "block",
-                      background: "#fff",
-                      pointerEvents: "none"
+                      maxHeight: "75vh",
+                      objectFit: "cover",
+                      objectPosition: "top",
+                      display: "block"
+                    }}
+                    onError={(e) => {
+                      // Fallback if JPG transformation is unavailable
+                      e.target.style.display = "none";
                     }}
                   />
+                  <div style={{
+                    position: "absolute",
+                    inset: 0,
+                    background: "linear-gradient(to bottom, rgba(11,16,30,0.1) 60%, rgba(11,16,30,0.8) 100%)",
+                    display: "flex",
+                    alignItems: "flex-end",
+                    justifyContent: "center",
+                    paddingBottom: "24px"
+                  }}>
+                    <button className="btn-primary" style={{ padding: "12px 28px", fontSize: "14px", pointerEvents: "none", boxShadow: "0 4px 20px rgba(97,218,255,0.4)" }}>
+                      🔍 Tap to View Full Document
+                    </button>
+                  </div>
                 </div>
-              )
-            ) : isImage ? (
-              <img
-                src={secureUrl}
-                alt={cv.fileName}
-                style={{
-                  width: "100%",
-                  height: "auto",
-                  display: "block",
-                  pointerEvents: "none"
-                }}
-                onClick={() => setCvFullscreen(true)}
-              />
-            ) : (
-              <div style={{ textAlign: "center", padding: "40px", color: "var(--text-sub)" }} onClick={() => setCvFullscreen(true)}>
-                <p style={{ marginBottom: "16px" }}>Preview not available for this file type.</p>
-                <button className="btn-primary">
-                  View CV
-                </button>
-               </div>
-            )}
+              ) : isImage ? (
+                <img
+                  src={secureUrl}
+                  alt={cv.fileName || "CV Image"}
+                  style={{
+                    width: "100%",
+                    height: "auto",
+                    display: "block"
+                  }}
+                />
+              ) : (
+                <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--text-sub)" }}>
+                  <p style={{ marginBottom: "16px", fontSize: "16px" }}>📄 Tap to View CV Document</p>
+                  <button className="btn-primary" style={{ pointerEvents: "none" }}>
+                    View CV
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -244,10 +243,10 @@ export default function CvSection() {
             {/* Content area */}
             <div style={{ flex: 1, background: '#fff', position: 'relative' }}>
               {isPdf ? (
-                <embed
-                  src={secureUrl}
-                  type="application/pdf"
+                <iframe
+                  src={inlineUrl}
                   style={{ width: '100%', height: '100%', border: 'none' }}
+                  title="CV PDF"
                 />
               ) : isImage ? (
                 <img
