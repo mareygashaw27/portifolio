@@ -195,10 +195,8 @@ export default function CvSection() {
                 <button className="btn-primary">
                   View CV
                 </button>
-              </div>
+               </div>
             )}
-          </div>
-
           </div>
         </div>
       )}
