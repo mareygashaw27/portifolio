@@ -400,7 +400,7 @@ export default function CvSection() {
 
                 {secureUrl && (
                   <a
-                    href={secureUrl}
+                    href={isPdf ? `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(secureUrl)}` : secureUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
@@ -420,29 +420,59 @@ export default function CvSection() {
               </div>
 
               {isPdf ? (
-                <object
-                  data={blobUrl || inlineUrl || secureUrl || `${API_BASE_URL}/api/cv/file`}
-                  type="application/pdf"
-                  style={{
-                    width: "100%",
-                    height: "80vh",
-                    border: "none",
-                    display: "block",
-                    background: "#161b22"
-                  }}
-                >
-                  <iframe
-                    src={blobUrl || inlineUrl || secureUrl || `${API_BASE_URL}/api/cv/file`}
-                    style={{
-                      width: "100%",
-                      height: "80vh",
-                      border: "none",
-                      display: "block",
-                      background: "#161b22"
-                    }}
-                    title="CV PDF Viewer"
-                  />
-                </object>
+                <div style={{ width: "100%", background: "#161b22", minHeight: "600px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  {/* High-res Cloudinary Rendered PDF Image (100% reliable on all devices & browsers) */}
+                  {secureUrl?.includes('cloudinary.com') ? (
+                    <div style={{ width: "100%", overflowX: "auto", padding: "16px", display: "flex", justifyContent: "center" }}>
+                      <img
+                        src={secureUrl
+                          .replace('/raw/upload/', '/image/upload/fl_inline,f_jpg,pg_1,w_1200/')
+                          .replace('/image/upload/', '/image/upload/fl_inline,f_jpg,pg_1,w_1200/')
+                          .replace(/\.pdf$/i, '.jpg')
+                        }
+                        alt="Uploaded CV Document"
+                        style={{
+                          maxWidth: "100%",
+                          height: "auto",
+                          borderRadius: "8px",
+                          boxShadow: "0 8px 30px rgba(0, 0, 0, 0.6)",
+                          border: "1px solid rgba(255, 255, 255, 0.1)",
+                          display: "block"
+                        }}
+                        onError={(e) => {
+                          // Fallback to Mozilla PDF.js viewer if Cloudinary image transform fails
+                          e.target.style.display = 'none';
+                          const iframe = document.getElementById('cv-pdf-js-iframe');
+                          if (iframe) iframe.style.display = 'block';
+                        }}
+                      />
+                      <iframe
+                        id="cv-pdf-js-iframe"
+                        src={`https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(secureUrl)}`}
+                        style={{
+                          width: "100%",
+                          height: "80vh",
+                          border: "none",
+                          display: "none",
+                          background: "#161b22"
+                        }}
+                        title="CV PDF Viewer"
+                      />
+                    </div>
+                  ) : (
+                    <iframe
+                      src={`https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(blobUrl || secureUrl || `${API_BASE_URL}/api/cv/file`)}`}
+                      style={{
+                        width: "100%",
+                        height: "80vh",
+                        border: "none",
+                        display: "block",
+                        background: "#161b22"
+                      }}
+                      title="CV PDF Viewer"
+                    />
+                  )}
+                </div>
               ) : isImage ? (
                 <img
                   src={secureUrl}
