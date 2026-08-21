@@ -34,18 +34,25 @@ router.get("/file", async (req, res) => {
     }
 
     let secureUrl = cv.fileUrl.startsWith("http://") ? cv.fileUrl.replace("http://", "https://") : cv.fileUrl;
-    if (secureUrl.includes("cloudinary.com") && !secureUrl.includes("/fl_inline/")) {
-      secureUrl = secureUrl.includes("/raw/upload/")
-        ? secureUrl.replace("/raw/upload/", "/image/upload/fl_inline/")
-        : secureUrl.replace("/image/upload/", "/image/upload/fl_inline/");
-    }
 
     try {
-      const response = await fetch(secureUrl, {
+      let response = await fetch(secureUrl, {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
       });
+
+      // If fetching image/upload failed (e.g. 401 restricted), try fetching raw/upload version
+      if (!response.ok && secureUrl.includes("/image/upload/")) {
+        const rawVersion = secureUrl.replace("/image/upload/", "/raw/upload/");
+        const rawRes = await fetch(rawVersion, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+          }
+        });
+        if (rawRes.ok) response = rawRes;
+      }
+
       if (response.ok) {
         const contentType = response.headers.get("content-type") || "application/pdf";
         const arrayBuffer = await response.arrayBuffer();
@@ -57,10 +64,9 @@ router.get("/file", async (req, res) => {
         return res.send(buffer);
       }
     } catch (e) {
-      console.warn("Fetch failed, redirecting to secureUrl:", e.message);
+      console.warn("Backend fetch failed, redirecting:", e.message);
     }
 
-    // Fallback: Redirect directly to secureUrl
     return res.redirect(secureUrl);
   } catch (error) {
     res.status(500).send(error.message);

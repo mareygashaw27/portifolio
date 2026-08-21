@@ -19,10 +19,9 @@ async function uploadToCloudinary(base64Data, folder, resourceType = "auto") {
       resource_type: resourceType,
     };
     
-    // Explicitly handle PDFs to ensure they get the .pdf extension
+    // Explicitly handle PDFs as 'raw' so Cloudinary serves them publicly without 401 restrictions
     if (base64Data.startsWith("data:application/pdf")) {
-      options.resource_type = "image"; // Cloudinary handles PDFs best as 'image'
-      options.format = "pdf";
+      options.resource_type = "raw";
     }
 
     const result = await cloudinary.uploader.upload(base64Data, options);

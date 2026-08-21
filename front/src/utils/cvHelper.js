@@ -14,7 +14,9 @@ export const openCvFile = (cvData, API_BASE_URL = '') => {
     } catch (e) {}
   }
 
-  if (!rawUrl) {
+  // If rawUrl is a Cloudinary image/upload URL (which Cloudinary blocks with 401 by default),
+  // route through backend proxy endpoint to stream it cleanly.
+  if (!rawUrl || (rawUrl.includes('cloudinary.com') && rawUrl.includes('/image/upload/'))) {
     const defaultApi = import.meta.env.VITE_API_URL || "https://portifolio-backend-4t3v.onrender.com";
     const baseUrl = API_BASE_URL || defaultApi;
     rawUrl = `${baseUrl}/api/cv/file`;
